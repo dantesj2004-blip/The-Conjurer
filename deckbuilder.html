@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Deckbuilder - The Conjurer: Guerra de Mitos</title>
+<link href="Logo.png" rel="icon" type="image/png"/>
+<link href="https://fonts.googleapis.com/css2?family=Metal+Mania&amp;display=swap" rel="stylesheet"/>
+<link href="GaleriaCSS.css"  rel="stylesheet"/> 
+<link rel="stylesheet" href="deckbuilder.css"/> 
+<script src="https://unpkg.com/phosphor-icons">
+</script>
+<style>
+      
+    </style>
+</head>
+<body>
+<header class="main-header">
+<div class="header-top-bar">
+<div class="auth-buttons">
+<a class="btn-auth btn-register" href="#">REGISTRARSE</a>
+<a class="btn-auth btn-login" href="index.html">ENTRAR</a>
+</div>
+</div>
+<div class="logo-area">
+<img alt="Logo The Conjurer" class="logo-main" src="Logo.png"/>
+</div>
+<nav class="main-nav">
+<a href="index.html">INICIO</a>
+<a href="Galeria.html">GALERÍA</a>
+<a class="active" href="#">DECKBUILDER</a>
+<a href="#">REGLAS</a>
+<a href="#">NOTICIAS</a>
+</nav>
+</header>
+<main class="deckbuilder-container">
+<div class="card-preview-area">
+<h3 style="color: var(--text-color); margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px;">Vista Previa</h3>
+<img alt="Vista previa de la carta seleccionada" id="card-preview-image" src="https://placehold.co/300x420/2a2a2a/ffffff?text=Selecciona+una+carta"/>
+<div id="card-preview-details">Haz clic en una carta para verla en grande.</div>
+</div>
+<div class="card-gallery">
+<h2>Galería de Cartas Disponibles</h2>
+<div id="panteon-info">
+<p><strong>Panteón Seleccionado:</strong> <span class="mitologia" id="current-pantheon">Ninguno</span></p>
+<p class="validation-item validation-error" id="pantheon-limit-msg"><i class="ph-bold ph-warning"></i> Solo se permite 1 Panteón.</p>
+</div>
+<div class="filters-container">
+<input class="filter-input" id="search-bar" placeholder="Buscar por Nombre o Habilidad..." type="text"/>
+<select class="filter-select" id="type-filter">
+<option value="">Todo Tipo</option>
+<option value="Panteón">Panteón</option>
+<option value="Personaje">Personaje</option>
+<option value="Recurso">Recurso</option>
+<option value="Evento">Evento</option>
+<option value="Acción">Acción</option>
+<option value="Invocación">Invocación</option>
+<option value="Equipo">Equipo</option>
+</select>
+<select class="filter-select" id="mythology-filter">
+<option value="">Toda Mitología</option>
+</select>
+<button class="btn-auth" onclick="applyFilters()">Aplicar Filtros</button>
+</div>
+<div id="gallery-grid">
+<p>Cargando cartas...</p>
+</div>
+</div>
+<div class="deck-list">
+    <h2>
+        <span id="deck-name" contenteditable="true" title="Haz clic para editar">Tu Mazo</span> (Deck) 
+        <i class="ph-bold ph-pencil-simple" style="cursor: help; font-size: 0.8em; vertical-align: middle;"></i>
+    </h2>
+
+<div class="deck-actions">
+<button class="btn-auth" id="export-tts-btn">Exportar TTS</button>
+<button class="btn-auth" onclick="exportDeckToJSON()">Exportar Deck</button>
+<input accept=".json" id="importDeckFile" onchange="importDeckFromJSON(event)" style="display:none" type="file"/>
+<button class="btn-auth" onclick="document.getElementById('importDeckFile').click()">Importar Deck</button>
+</div>
+<div class="deck-section" id="god-deck">
+<h3>Mazo de Dioses (<span id="god-deck-count">0</span>/20+)</h3>
+<div id="god-deck-cards">
+<p class="placeholder">Añade Panteón, Personajes, Recursos, Eventos aquí.</p>
+</div>
+</div>
+<div class="deck-section" id="destiny-deck">
+<h3>Mazo de Designios (<span id="destiny-deck-count">0</span>/30+)</h3>
+<div id="destiny-deck-cards">
+<p class="placeholder">Añade Cartas de Acción, Invocación, Equipo aquí.</p>
+</div>
+</div>
+<div class="validation-error" id="validation-area">
+<h3>Estado de Validación (Batalla):</h3>
+<div class="validation-item validation-error" id="valid-pantheon"><i class="ph-bold ph-x"></i> Panteón Seleccionado: No</div>
+<div class="validation-item validation-error" id="valid-god-size"><i class="ph-bold ph-x"></i> Mazo de Dioses: Mínimo 20</div>
+<div class="validation-item validation-error" id="valid-destiny-size"><i class="ph-bold ph-x"></i> Mazo de Designios: Mínimo 30</div>
+<div class="validation-item validation-ok" id="valid-unique-cards"><i class="ph-bold ph-check"></i> Cartas Únicas: OK</div>
+<div class="validation-item validation-ok" id="valid-types"><i class="ph-bold ph-check"></i> Tipos de Cartas Correctos: OK</div>
+</div>
+</div>
+</main>
+<footer class="main-footer">
+<div class="footer-content">
+<p>© 2024 The Conjurer - Guerra de Mitos DeckBuilder. Todos los derechos reservados.</p>
+</div>
+</footer>
+<script src="deckbuilder.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+</body>
+</html>

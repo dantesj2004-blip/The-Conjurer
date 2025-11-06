@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TTS Deck Exporter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1b1b1b;
+      color: #eee;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #6cf;
+    }
+    .panel {
+      background: #2a2a2a;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 800px;
+      margin: 0 auto 20px auto;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    input[type=file] {
+      margin-bottom: 15px;
+    }
+    button {
+      background: #0078ff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #005fcc;
+    }
+    #preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    #preview img {
+      width: 80px;
+      height: 112px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #555;
+    }
+    #output {
+      display: block;
+      margin-top: 15px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+ 
+  <h1>TTS Deck Exporter (HTML + JS)</h1>
+ 
+  <div class="panel">
+    <label>Subir cartas (fronts):</label>
+    <input type="file" id="fronts" accept="image/*" multiple>
+ 
+    <label>Subir reverso (back):</label>
+    <input type="file" id="back" accept="image/*">
+ 
+    <label><input type="checkbox" id="addBackTile" checked> Añadir el back como última carta</label><br><br>
+ 
+    <button id="generateBtn">Generar PNG para TTS</button>
+ 
+    <div id="preview"></div>
+ 
+    <a id="downloadLink" style="display:none;" download="tts_deck.png">Descargar imagen</a>
+  </div>
+ 
+  <canvas id="canvas" style="display:none;"></canvas>
+ 
+  <script>
+    const frontsInput = document.getElementById('fronts');
+    const backInput = document.getElementById('back');
+    const generateBtn = document.getElementById('generateBtn');
+    const preview = document.getElementById('preview');
+    const canvas = document.getElementById('canvas');
+    const downloadLink = document.getElementById('downloadLink');
+    const addBackTile = document.getElementById('addBackTile');
+ 
+    let frontImages = [];
+    let backImage = null;
+ 
+    frontsInput.addEventListener('change', (e) => {
+      frontImages = Array.from(e.target.files);
+      updatePreview();
+    });
+ 
+    backInput.addEventListener('change', (e) => {
+      backImage = e.target.files[0] || null;
+      updatePreview();
+    });
+ 
+    function updatePreview() {
+      preview.innerHTML = '';
+      frontImages.forEach(f => {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(f);
+        preview.appendChild(img);
+      });
+      if (backImage) {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(backImage);
+img.style.border = '2px solid #6cf';
+        preview.appendChild(img);
+      }
+    }
+ 
+    async function loadImage(file) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+      });
+    }
+ 
+    generateBtn.addEventListener('click', async () => {
+      if (!frontImages.length) return alert("Sube al menos una carta.");
+ 
+      const cols = 10;
+      const rows = 7;
+      const cardW = 512;
+      const cardH = Math.round(cardW * 1.4);
+      const padding = 4;
+ 
+      const totalCards = addBackTile.checked && backImage ? frontImages.length + 1 : frontImages.length;
+      const canvasW = cols * cardW + (cols + 1) * padding;
+      const canvasH = rows * cardH + (rows + 1) * padding;
+ 
+      canvas.width = canvasW;
+      canvas.height = canvasH;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvasW, canvasH);
+ 
+      const allFiles = [...frontImages];
+      if (addBackTile.checked && backImage) allFiles.push(backImage);
+ 
+      for (let i = 0; i < allFiles.length; i++) {
+        const img = await loadImage(allFiles[i]);
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        if (row >= rows) break; // stop if over grid
+ 
+        const x = padding + col * (cardW + padding);
+        const y = padding + row * (cardH + padding);
+        ctx.drawImage(img, x, y, cardW, cardH);
+ 
+        // optional numbering overlay
+        ctx.fillStyle = 'white';
+        ctx.font = `${cardW * 0.15}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(i + 1, x + cardW / 2, y + cardH / 2);
+      }
+ 
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        downloadLink.href = url;
+downloadLink.style.display = 'block';
+        downloadLink.textContent = 'Descargar imagen generada';
+      }, 'image/png');
+    });
+  </script>
+</body>
+</html>

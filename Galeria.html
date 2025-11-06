@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Conjurer - GDM DeckBuilder</title>
+    <link rel="icon" type="image/png" href="Logo.png"> 
+    <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="GaleriaCSS.css">
+</head>
+<body>
+    
+    <header class="main-header">
+        <div class="header-top-bar">
+            <div class="auth-buttons">
+                <a href="#" class="btn-auth btn-register">REGISTRARSE</a>
+                <a href="index.html" class="btn-auth btn-login">ENTRAR</a>
+            </div>
+        </div>
+        
+        <div class="logo-area">
+            <img src="Logo.png" alt="Logo The Conjurer" class="logo-main">
+        </div>
+        
+        <nav class="main-nav">
+            <a href="index.html">INICIO</a>
+            <a href="#" class="active">GALERÍA</a>
+            <a href="deckbuilder.html">DECKBUILDER</a>
+            <a href="#">REGLAS</a>
+            <a href="#">NOTICIAS</a>
+        </nav>
+    </header>
+    
+    <main class="gallery-content">
+        <h1 id="gallery-title" class="gallery-title">Galería de Cartas GDM</h1>
+        
+        <div id="card-grid" class="card-grid">
+            <p>Cargando cartas...</p> 
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>THE CONJURER</h3>
+                <p>GDM DeckBuilder Project © 2025</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="card-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="closeModal()">×</button>
+            
+            <div class="modal-body">
+                <div class="modal-image-container">
+                    <img id="modal-image" src="" alt="Carta en detalle">
+                </div>
+                
+                <div class="modal-details-container">
+                    <h2 id="modal-card-name"></h2>
+                    <table id="modal-card-table">
+                        </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    const csvFilePath = 'GDM-CARTAS - Hoja 1 (4).csv';
+    let allCardsData = []; // Variable global para guardar los datos
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadCSV();
+
+        // Cierra la modal al pulsar la tecla ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+        // Cierra la modal al hacer clic fuera del contenido
+        document.getElementById('card-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'card-modal') {
+                closeModal();
+            }
+        });
+    });
+
+    // Función para cerrar la modal
+    function closeModal() {
+        document.getElementById('card-modal').style.display = 'none';
+        
+        // Resetear la rotación al cerrar
+        const image = document.getElementById('modal-image');
+        image.classList.remove('rotated');
+        
+        // Limpiar estilos si es necesario
+        const imageContainer = document.querySelector('.modal-image-container');
+        // Ajsutado: El ancho estándar es 380px
+        imageContainer.style.width = '380px'; 
+    }
+
+    // Función principal para mostrar la modal
+    function showCardDetails(cardId) {
+        // Encontrar la carta en los datos guardados
+        const card = allCardsData.find(c => c.ID === cardId);
+        if (!card) return;
+
+        const modal = document.getElementById('card-modal');
+        const image = document.getElementById('modal-image');
+        const nameElement = document.getElementById('modal-card-name');
+        const table = document.getElementById('modal-card-table');
+        const imageContainer = document.querySelector('.modal-image-container');
+        
+        // --- 1. CONFIGURACIÓN DE IMAGEN Y ROTACIÓN ---
+        image.src = card['URL-IMG'];
+        nameElement.textContent = card.Nombre;
+        
+        // Verifica si es un Panteón (Tipo de carta 'Panteón')
+        if (card.Tipo && card.Tipo.toLowerCase().includes('panteón')) {
+            image.classList.add('rotated');
+            // AJUSTE: Ancho del contenedor para Panteones grandes
+            imageContainer.style.width = '540px'; 
+        } else {
+            image.classList.remove('rotated');
+            // AJUSTE: Ancho estándar para cartas normales grandes
+            imageContainer.style.width = '380px'; 
+        }
+
+        // --- 2. GENERACIÓN DE LA TABLA DE ATRIBUTOS ---
+        table.innerHTML = ''; 
+        
+        const excludedHeaders = ['ID', 'Nombre', 'URL-IMG', 'Mitologia', 'Leyenda', 'URL-IMG-BACK'];
+        
+        Object.keys(card).forEach(key => {
+            if (!excludedHeaders.includes(key) && card[key]) {
+                const row = table.insertRow();
+                
+                const cell1 = row.insertCell(0);
+                cell1.textContent = key.toUpperCase().replace('-', ' '); 
+                
+                const cell2 = row.insertCell(1);
+                cell2.textContent = card[key];
+            }
+        });
+
+        // --- 3. MOSTRAR MODAL ---
+        modal.style.display = 'flex'; 
+    }
+
+    // Función para cargar el CSV y añadir event listeners
+    async function loadCSV() {
+        const cardGrid = document.getElementById('card-grid');
+        try {
+            const response = await fetch(csvFilePath);
+            const csvText = await response.text();
+
+            const rows = csvText.trim().split('\n').map(row => row.trim());
+            const headers = rows[0].split(',');
+            
+            allCardsData = rows.slice(1).map(row => {
+                const values = row.split(',');
+                let card = {};
+                headers.forEach((header, i) => {
+                    card[header.trim()] = values[i] ? values[i].trim().replace(/"/g, '') : '';
+                });
+                return card;
+            }).filter(card => card.ID && card.Nombre);
+
+            cardGrid.innerHTML = ''; 
+            
+            allCardsData.forEach(card => {
+                const imagePath = card['URL-IMG']; 
+                if (!imagePath) return;
+
+                const imgElement = document.createElement('img');
+                imgElement.src = imagePath;
+                imgElement.alt = `Carta ${card.Nombre}`;
+                imgElement.classList.add('card-image');
+                
+                const container = document.createElement('div');
+                container.classList.add('card-container');
+                container.appendChild(imgElement);
+
+                container.addEventListener('click', () => showCardDetails(card.ID));
+                container.style.cursor = 'pointer'; 
+
+                cardGrid.appendChild(container);
+            });
+
+        } catch (error) {
+            console.error('Error al cargar o procesar el CSV:', error);
+            cardGrid.innerHTML = '<p style="color: red;">Error al cargar las cartas. Revisa el archivo CSV y la consola.</p>';
+        }
+    }
+    </script>
+</body>
+</html>

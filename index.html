@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INICIO - The Conjurer: Guerra de Mitos</title>
+    <link rel="icon" type="image/png" href="Logo.png"> 
+    <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="GaleriaCSS.css">
+    
+    <style>
+        /* Replicar variables del CSS principal (GaleriaCSS.css) para usarlas en los nuevos estilos */
+        :root {
+            --primary-purple: #C873C4;
+            --secondary-green: #97E88D;
+            --background-dark: #1e1e1e;
+            --text-color: #fff;
+            --title-font: 'Montserrat', sans-serif; /* Usado para títulos del banner de intro */
+            --text-body-font: 'Montserrat', sans-serif; /* Usado para todo el texto de cuerpo */
+        }
+        
+        /* Aplicación de Montserrat al texto de cuerpo global */
+        body {
+            font-family: var(--text-body-font); 
+        }
+
+        /* =======================================
+           LAYOUT TIPO NOTICIAS (Basado en la imagen)
+           ======================================= */
+        .home-content {
+            padding: 40px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(2, 1fr); /* 2 columnas principales */
+        }
+
+        .section-title {
+            text-align: center;
+            font-family: 'Metal Mania', cursive;
+            color: var(--secondary-green);
+            margin: 0 0 40px 0;
+            font-size: 2.5em;
+            text-shadow: 0 0 10px rgba(46, 139, 87, 0.5); /* Sombra verde */
+            grid-column: 1 / 3; /* Ocupa el ancho completo */
+        }
+        
+        .article-card {
+            background-color: #111; 
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text-color);
+            transition: transform 0.3s ease;
+        }
+
+        .article-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 15px rgba(46, 139, 87, 0.5); /* Efecto hover con color verde */
+        }
+
+        /* Tarjeta Principal (similar a la superior izquierda de la imagen) */
+        .article-card-full {
+            grid-column: 1 / 2; /* Columna izquierda */
+            grid-row: 2 / 4; /* Ocupa 2 filas */
+            min-height: 500px;
+        }
+        
+        /* Grid para las tarjetas de la columna derecha */
+        .right-column-grid {
+            grid-column: 2 / 3;
+            grid-row: 2 / 5;
+            display: grid;
+            gap: 20px;
+            grid-template-columns: 1fr;
+            grid-template-rows: repeat(3, minmax(150px, 1fr));
+        }
+        
+        /* Banner CTA (similar al inferior izquierdo de la imagen) */
+        .article-card.cta-banner {
+            grid-column: 1 / 2;
+            grid-row: 4 / 5;
+            background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.8)), url('https://via.placeholder.com/1200x400/3b0066/ffffff?text=Fondo+Deckbuilder');
+            background-size: cover;
+            text-align: center;
+            padding: 40px;
+            display: block; 
+            min-height: auto;
+        }
+        
+        /* Contenido superpuesto a la imagen */
+        .article-card img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        .article-content {
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 100%);
+            padding-top: 50%; 
+        }
+
+        .article-tag {
+            font-family: var(--text-body-font); /* Usando Montserrat */
+            font-size: 0.8em;
+            font-weight: bold;
+            color: var(--secondary-green);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .article-title {
+            font-family: 'Metal Mania', cursive; /* Títulos principales mantienen Metal Mania */
+            font-size: 1.8em;
+            margin: 0;
+            line-height: 1.2;
+        }
+        
+        .article-card-full .article-title {
+            font-size: 2.5em;
+        }
+        
+        .cta-banner .article-title {
+            font-size: 2em;
+        }
+        
+        .cta-banner p {
+            /* Inherits Montserrat from body */
+            margin: 10px 0 20px 0;
+            color: #ccc;
+        }
+        
+        .cta-banner .btn-cta {
+            background-color: var(--secondary-green);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            /* Inherits Montserrat from body */
+        }
+        
+        /* =======================================
+           CONTENIDO PDF (Ahora usa Montserrat)
+           ======================================= */
+        .pdf-content-section {
+            grid-column: 1 / 3;
+            padding: 20px;
+            margin-top: 20px;
+            border-top: 2px solid var(--secondary-green);
+        }
+        
+        .pdf-content-section h2 {
+            font-family: 'Metal Mania', cursive;
+            color: var(--primary-purple);
+            font-size: 2em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .pdf-content-section p {
+            max-width: 900px;
+            margin: 10px auto;
+            line-height: 1.8;
+            font-size: 1.1em;
+            color: #bbb;
+            font-family: var(--text-body-font); /* Usando Montserrat */
+        }
+        
+        /* =======================================
+           NUEVO BANNER DE INTRODUCCIÓN (Contenido de la imagen)
+           ======================================= */
+        .intro-banner {
+            background-color: var(--background-dark); 
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .intro-banner h1, .intro-banner h2 {
+            font-family: var(--title-font);
+            text-transform: uppercase;
+            font-weight: 900; 
+            margin: 10px 0;
+            line-height: 1;
+        }
+
+        .intro-banner h1 {
+            color: var(--secondary-green); 
+            font-size: 3em;
+        }
+
+        .intro-banner h2 {
+            color: var(--primary-purple); 
+            font-size: 4em;
+        }
+        
+        /* Estilos específicos para los textos de la imagen */
+        .intro-banner-text {
+            max-width: 600px;
+            margin: 20px auto 40px auto;
+            color: #ccc;
+            line-height: 1.6;
+            font-family: var(--text-body-font); /* Usando Montserrat */
+            font-size: 1.1em;
+        }
+        
+        .intro-banner-text p {
+             margin: 10px 0;
+        }
+        
+        /* Ajuste para el titular "¿QUÉ ES?" */
+        .intro-banner .question {
+            color: var(--text-color);
+            font-size: 2.5em;
+            margin-top: 50px;
+        }
+
+        /* =======================================
+           RESPONSIVE
+           ======================================= */
+        @media (max-width: 768px) {
+            .home-content {
+                grid-template-columns: 1fr;
+            }
+            .article-card-full, .right-column-grid, .cta-banner, .pdf-content-section {
+                grid-column: 1 / 2;
+                grid-row: auto;
+                min-height: 350px;
+            }
+            /* Responsive para el banner de introducción */
+            .intro-banner h1 { 
+                font-size: 2.5em;
+            }
+            .intro-banner h2 { 
+                font-size: 3.5em;
+            }
+            .intro-banner .question { 
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <header class="main-header">
+        <div class="header-top-bar">
+            <div class="auth-buttons">
+                <a href="#" class="btn-auth btn-register">REGISTRARSE</a>
+                <a href="index.html" class="btn-auth btn-login">ENTRAR</a>
+            </div>
+        </div>
+        
+        <div class="logo-area">
+            <img src="Logo.png" alt="Logo The Conjurer" class="logo-main">
+        </div>
+        
+        <nav class="main-nav">
+            <a href="index.html" class="active">INICIO</a>
+            <a href="Galeria.html">GALERÍA</a>
+            <a href="deckbuilder.html">DECKBUILDER</a>
+            <a href="#">REGLAS</a>
+            <a href="#">NOTICIAS</a>
+        </nav>
+    </header>
+    
+    <main>
+        
+        <section class="intro-banner">
+            
+            <h1 class="text-green">THE CONJURER</h1>
+            <h2 class="text-purple">GDM DECKBUILDER</h2>
+            
+            <div class="intro-banner-text">
+                <p>Guerra de Mitos <strong>(GDM)</strong> es un juego de estrategia de cartas único, donde tú y otros jugadores luchan por el destino de una mitología.</p>
+                <p>Diseña tu estrategia con un poderoso <strong>Mazo de Dioses</strong> y un astuto <strong>Mazo de Designios</strong> para conquistar la victoria. Con <strong>The Conjurer</strong>, el juego nunca termina.</p>
+            </div>
+            
+            <h1 class="question">¿QUÉ ES?</h1>
+            <h2 class="text-purple">THE CONJURER</h2>
+
+            <div class="intro-banner-text">
+                <p>Somos un proyecto de pasión dedicado a revivir Guerra de Mitos, un juego extraordinario cuya producción física ha cesado.</p>
+                <p>Hemos digitalizado todas las cartas, creado una base de datos desde cero y desarrollado un suite de herramientas esenciales para la comunidad, con el único objetivo de que puedas seguir jugando, coleccionando y compitiendo.</p>
+            </div>
+        </section>
+
+        <section class="home-content">
+            
+            <h1 class="section-title">Descubre "Guerra de Mitos": El Renacer de una Leyenda</h1>
+            
+            <a href="#" class="article-card article-card-full">
+                <img src="GDM/BLOG/The Conjurer.png" alt="Artículo Principal: Guerra de Mitos">
+                <div class="article-content">
+                    <span class="article-tag">PROYECTO</span>
+                    <h2 class="article-title">The Conjurer: Revive la Estrategia Única de GDM</h2>
+                    <p>Somos un proyecto de pasión dedicado a revivir Guerra de Mitos, un juego extraordinario cuya producción física ha cesado. Hemos digitalizado todas las cartas, creado una base de datos desde cero y desarrollado un suite de herramientas esenciales para la comunidad.</p>
+                </div>
+            </a>
+
+            <div class="right-column-grid">
+                
+                <a href="#" class="article-card">
+                    <img src="GDM/BLOG/DSC06295.JPG" alt="Mazo de Dioses">
+                    <div class="article-content">
+                        <span class="article-tag">ESTRATEGIA</span>
+                        <h2 class="article-title">La Clave del Combate: Dioses y Designios</h2>
+                    </div>
+                </a>
+
+                <a href="Galeria.html" class="article-card">
+                    <img src="GDM/BLOG/DSC06288.JPG" alt="Galería de Cartas">
+                    <div class="article-content">
+                        <span class="article-tag">HERRAMIENTAS</span>
+                        <h2 class="article-title">Explora la Galería Completa de Cartas GDM</h2>
+                    </div>
+                </a>
+
+                <a href="#"  class="article-card">
+                    <img src="GDM/BLOG/DSC06283.JPG" alt="No es TCG">
+                    <div class="article-content">
+                        <span class="article-tag">DIFERENCIAS</span>
+                        <h2 class="article-title">¿GDM es un TCG? ¡Descubre por qué no lo es!</h2>
+                    </div>
+                </a>
+            </div>
+            
+            <a href="deckbuilder.html" class="article-card cta-banner">
+                <h2 class="article-title">¡Forja tu Estrategia!</h2>
+                <p>Usa el Deckbuilder y da el primer paso para revivir la batalla.</p>
+                <span class="btn-cta">IR AL DECKBUILDER</span>
+            </a>
+            
+        </section>
+
+        <section class="pdf-content-section">
+            <h2>Acerca de Guerra de Mitos (GDM)</h2>
+            <p>
+                <strong>Guerra de Mitos (GDM)</strong> es un juego de estrategia de cartas único, donde tú y otros jugadores luchan por el destino de una mitología. Diseña tu estrategia con un poderoso <strong>Mazo de Dioses</strong> y un astuto <strong>Mazo de Designios</strong> para conquistar la victoria. Es una experiencia profunda de estrategia y construcción de mazos.
+            </p>
+            <p>
+                La clave es la combinación de tu Mazo de Dioses (la base de tu poder) y tu Mazo de Designios (las tácticas que usarás en el combate).
+            </p>
+            <p>
+                <Strong>¿Es GDM un TCG (Juego de Cartas Coleccionables)?</Strong>
+            </p>
+            <p>
+                <Strong>¡No!</Strong> GDM se distingue porque se distribuye por <strong>colecciones completas</strong>. Cuando compras una caja o una expansión, adquieres todas las cartas de esa colección, sin necesidad de sobres aleatorios. Esto facilita completar tu galería y concentrarte únicamente en la estrategia.
+            </p>
+        </section>
+
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>THE CONJURER</h3>
+                <p>GDM DeckBuilder Project © 2025</p>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

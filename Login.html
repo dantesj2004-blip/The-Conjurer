@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Conjurer - Login</title>
+    <link rel="icon" type="image/png" href="Logo.png"> 
+    <link rel="stylesheet" href="LoginCSS.css">
+</head>
+<body>
+    <div class="background-container">
+    </div>
+    
+    <img src="Logo.png" href = "index.html" alt="Logo The Conjurer" class="logo-top-left">
+    
+    <div class="login-center-container">
+        <div class="login-box">
+            <h1>Login</h1>
+            
+            <form id="loginForm"> 
+                <div class="input-group">
+                    <input type="email" id="email" required placeholder="Email">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" required placeholder="Password">
+                </div>
+                <div class="options">
+                    <label for="remember-me">
+                        <input type="checkbox" id="remember-me"> Remember me
+                    </label>
+                    <a href="#">Forgot password?</a>
+                </div>
+                <button type="submit" class="login-button">Login</button>
+            </form>
+            
+            <p id="loginMessage" style="margin-top: 15px; text-align: center; font-weight: bold;"></p>
+        </div>
+    </div>
+
+    <script>
+        const LOGIN_FILE = 'Usuarios - Hoja 1.csv';
+        const loginForm = document.getElementById('loginForm');
+        const loginMessage = document.getElementById('loginMessage');
+
+        loginForm.addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevenir el envío tradicional del formulario
+            
+            const emailInput = document.getElementById('email').value.trim().toLowerCase();
+            const passwordInput = document.getElementById('password').value;
+            
+            loginMessage.textContent = 'Verificando credenciales...';
+            loginMessage.style.color = 'gray';
+
+            try {
+                // 1. Obtener el contenido del CSV
+                const response = await fetch(LOGIN_FILE);
+
+                if (!response.ok) {
+                    throw new Error('No se pudo cargar el archivo CSV. Asegúrate de que el archivo y el servidor están configurados correctamente.');
+                }
+
+                const csvText = await response.text();
+                
+                // 2. Analizar el CSV y buscar el usuario
+                const isAuth = checkCredentials(csvText, emailInput, passwordInput);
+
+                // 3. Mostrar resultado
+                if (isAuth) {
+                    loginMessage.textContent = '¡Login Exitoso! Credenciales correctas.';
+                    loginMessage.style.color = 'pink';
+                    // Aquí podrías redirigir al usuario
+                    // window.location.href = 'index.html';
+                } else {
+                    loginMessage.textContent = 'Email o Contraseña incorrectos.';
+                    loginMessage.style.color = 'red';
+                }
+
+            } catch (error) {
+                console.error("Error en el login:", error);
+                loginMessage.textContent = `Error: ${error.message}`;
+                loginMessage.style.color = 'darkorange';
+            }
+        });
+
+        /**
+         * @function checkCredentials
+         * Parsea el texto del CSV y verifica las credenciales.
+         * @param {string} csvData - El contenido completo del archivo CSV.
+         * @param {string} email - El email introducido por el usuario.
+         * @param {string} password - La contraseña introducida por el usuario.
+         * @returns {boolean} True si las credenciales son válidas, False en caso contrario.
+         */
+        function checkCredentials(csvData, email, password) {
+            // Dividir el CSV por líneas
+            const lines = csvData.split('\n');
+
+            // Asumir que el header está en la primera línea. Lo ignoramos o lo usamos para determinar índices.
+            const headers = lines[0].split(',').map(h => h.trim());
+            const emailIndex = headers.indexOf('Email');
+            const passwordIndex = headers.indexOf('Contraseña');
+
+            // Si no se encuentran las columnas, no podemos verificar.
+            if (emailIndex === -1 || passwordIndex === -1) {
+                 throw new Error("CSV mal formateado. Las columnas 'Email' o 'Contraseña' no se encuentran.");
+            }
+
+            // Recorrer todas las líneas de datos (saltando la cabecera)
+            for (let i = 1; i < lines.length; i++) {
+                // Usamos una expresión regular simple para dividir por comas, ignorando comas dentro de comillas (si las hubiera)
+                const columns = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || lines[i].split(',');
+                
+                // Asegurar que la línea no esté vacía o tenga suficientes columnas
+                if (columns.length > passwordIndex) {
+                    const csvEmail = columns[emailIndex].trim().toLowerCase();
+                    const csvPassword = columns[emailIndex].trim().toLowerCase() === columns[emailIndex] ? columns[passwordIndex].trim() : columns[passwordIndex].trim().replace(/"/g, ''); // Limpieza simple de comillas
+                    
+                    // Comprobación de credenciales
+                    if (csvEmail === email && csvPassword === password) {
+                        return true; // Éxito
+                    }
+                }
+            }
+
+            return false; // No se encontró ninguna coincidencia
+        }
+    </script>
+</body>
+</html>

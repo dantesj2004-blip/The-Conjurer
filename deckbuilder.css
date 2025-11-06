@@ -1,0 +1,369 @@
+  /* Estilos específicos para la interfaz del Deckbuilder */
+        :root {
+            --primary-purple: #C873C4;
+            --secondary-green: #97E88D;
+            --background-dark: #1e1e1e;
+            --text-color: #fff;
+            --deck-bg: #2a2a2a;
+        }
+/* ==== Parche para restaurar position: sticky dentro del layout flex ==== */
+
+/* Restablecimientos mínimos que GaleriaCSS aporta habitualmente */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; padding: 0; }
+
+/* Forzar que el viewport sea la referencia de scroll */
+html, body, main { overflow: visible !important; }
+
+/* Evitar que el contenedor flex estire verticalmente sus hijos */
+.deckbuilder-container {
+  display: flex;         /* conserva el layout flex */
+  gap: 20px;             /* conserva el gap que usas */
+  align-items: flex-start !important; /* evita estirado vertical que rompe sticky */
+  overflow: visible !important;       /* evita que el contenedor sea el scroll container */
+}
+
+/* Asegurar que el área preview calcule sticky correctamente */
+.card-preview-area {
+  position: sticky !important;
+  top: 20px !important;      /* tu offset actual */
+  z-index: 10 !important;
+  align-self: flex-start !important; /* evita estirado vertical dentro del flex */
+}
+
+/* Evitar que los compañeros creen su propio contenedor de scroll */
+.card-gallery,
+.deck-list {
+  min-height: auto !important;   /* reemplaza min-height: 80vh si existe */
+  overflow: visible !important;  /* evita scroll interno que cambia la referencia */
+}
+
+/* Neutralizar propiedades en ancestros que crean nuevos containing blocks */
+.deckbuilder-container,
+.deckbuilder-container * {
+  transform: none !important;
+  filter: none !important;
+  perspective: none !important;
+  will-change: auto !important;
+}
+
+/* Si tu header es fixed, crea una clase para ajustar el top del sticky.
+   Ajusta 64px por la altura real de tu header si aplica. */
+.card-preview-area.sticky-offset {
+  top: calc(64px + 20px) !important;
+}
+
+        .deckbuilder-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1600px; /* Aumentar ancho para la preview */
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        
+        /* Nuevo contenedor para la preview */
+        .card-preview-area {
+            flex: 1; 
+            max-width: 300px;
+            background-color: var(--deck-bg);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            /* --- CORRECCIÓN 1: Scroll Fijo --- */
+            position: sticky;
+            top: 20px;
+            z-index: 10;
+        }
+        
+        #card-preview-image {
+            width: 100%;
+            height: auto;
+            min-height: 400px; /* Altura mínima para el placeholder */
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            background-color: #1e1e1e; /* Color de fondo mientras no hay imagen */
+
+        }
+
+        #card-preview-details {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 0.9em;
+            color: rgb(252, 252, 252);
+        }
+
+        .card-gallery, .deck-list {
+            padding: 15px;
+            border-radius: 10px;
+            background-color: var(--deck-bg);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            min-height: 80vh;
+        }
+
+        .card-gallery {
+            flex: 2; /* Ocupa más espacio para mostrar la galería */
+            max-width: 700px;
+        }
+
+        .deck-list {
+            flex: 1; /* Ocupa el espacio restante */
+            max-width: 400px;
+        }
+
+        .filters-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap; /* Asegurar responsive */
+        }
+        
+        /* Estilos para los filtros */
+        .filter-input, .filter-select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background-color: #333;
+            color: var(--text-color);
+        }
+
+        /* === Gallery Grid === */
+        #gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .card-gallery-item {
+            position: relative;
+            cursor: pointer;
+            border-radius: 5px;
+            overflow: hidden;
+            transition: transform 0.1s;
+        }
+        
+        .card-gallery-item:hover {
+            transform: scale(1.05);
+        }
+
+        .card-gallery-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 5px;
+        }
+        
+        .card-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card-gallery-item:hover .card-overlay {
+            opacity: 1;
+        }
+
+        .card-count {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: var(--secondary-green);
+            color: black;
+            font-weight: bold;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9em;
+            border: 2px solid var(--text-color);
+            z-index: 10;
+        }
+        
+        /* === Deck List === */
+        .deck-list h2 {
+            margin-top: 0;
+            color: var(--secondary-green);
+        }
+        
+        /* --- NUEVO: Estilos para el nombre del mazo editable --- */
+        #deck-name {
+            display: inline-block;
+            min-width: 100px;
+            padding: 0 5px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            color: var(--secondary-green); /* Hereda el color */
+        }
+        #deck-name:hover {
+            background-color: #333;
+            outline: 1px dashed var(--primary-purple);
+        }
+        #deck-name:focus {
+            background-color: #444;
+            outline: 2px solid var(--primary-purple);
+            color: var(--text-color); /* Color al editar */
+        }
+
+        .deck-section {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 5px;
+        }
+
+        .deck-section h3 {
+            color: var(--primary-purple);
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .deck-card-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px dashed #333;
+        }
+
+        .deck-card-item:last-child {
+            border-bottom: none;
+        }
+
+        .card-name-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            text-align: left;
+            flex-grow: 1;
+            font-size: 0.95em;
+        }
+        
+        .card-name-btn:hover {
+            color: var(--secondary-green);
+        }
+
+        .count-controls button {
+            background-color: var(--primary-purple);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 6px;
+            margin: 0 2px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .count-controls button:hover {
+            background-color: #55008b;
+        }
+
+        /* === Validación de Reglas === */
+        #validation-area {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #331a1a;
+            border: 2px solid red;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        #validation-area.valid {
+            background-color: #1a331a;
+            border-color: var(--secondary-green);
+        }
+
+        #validation-area h3 {
+            margin-top: 0;
+            color: var(--text-color);
+            font-size: 1.1em;
+        }
+        
+        .validation-item {
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+        }
+        
+        .validation-item i {
+            margin-right: 8px;
+            font-size: 1.2em;
+        }
+        
+        .validation-ok { color: var(--secondary-green); }
+        .validation-error { color: #ff6347; }
+        
+        /* Estilos del Panteón Seleccionado */
+        #panteon-info {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid var(--secondary-green);
+            border-radius: 5px;
+            text-align: center;
+        }
+        #panteon-info .mitologia {
+            font-weight: bold;
+            color: var(--secondary-green);
+            font-size: 1.2em;
+        }
+        
+        .type-error {
+            color: #ff6347;
+            font-weight: bold;
+        }
+        
+        /* Media Queries para Responsive */
+        @media (max-width: 1200px) {
+             /* Ocultar Preview en pantallas pequeñas para dar espacio a galería y lista */
+            .card-preview-area {
+                display: none; 
+            }
+            .card-gallery {
+                max-width: none;
+                flex: 2;
+            }
+        }
+        
+        @media (max-width: 1024px) {
+            .deckbuilder-container {
+                flex-direction: column;
+            }
+            .card-gallery, .deck-list {
+                min-height: auto;
+                width: 100%;
+                max-width: none;
+            }
+        }
+    
+    .deck-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+    }
+
+   .btn-auth {
+    padding: 8px 15px;
+    margin-left: 10px;
+    border-radius: 5px;
+    color: #000000;
+    text-decoration: none;
+    background-color: var(--secondary-green);
+}
