@@ -9,8 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&amp;display=swap" rel="stylesheet"/>
 <link href="GaleriaCSS.css"  rel="stylesheet"/> 
 <link rel="stylesheet" href="deckbuilder.css"/> 
-<script src="https://unpkg.com/phosphor-icons">
-</script>
+<script src="https://unpkg.com/phosphor-icons"></script>
 <style>
       
     </style>
@@ -30,7 +29,7 @@
 <a href="index.html">INICIO</a>
 <a href="Galeria.html">GALERÍA</a>
 <a class="active" href="#">DECKBUILDER</a>
-<a href="#">REGLAS</a>
+<a href="reglas.html">REGLAS</a>
 <a href="#">NOTICIAS</a>
 </nav>
 </header>
@@ -74,7 +73,7 @@
     </h2>
 
 <div class="deck-actions">
-<button class="btn-auth" id="export-tts-btn">Exportar TTS</button>
+<button class="btn-auth" id="export-tts-btn" title="Genera una decksheet de 10x7 (2500x2450px) optimizada para TTS">Exportar TTS Decksheet</button>
 <button class="btn-auth" onclick="exportDeckToJSON()">Exportar Deck</button>
 <input accept=".json" id="importDeckFile" onchange="importDeckFromJSON(event)" style="display:none" type="file"/>
 <button class="btn-auth" onclick="document.getElementById('importDeckFile').click()">Importar Deck</button>
@@ -106,7 +105,7 @@
 <p>© 2024 The Conjurer - Guerra de Mitos DeckBuilder. Todos los derechos reservados.</p>
 </div>
 </footer>
-<script src="deckbuilder.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="deckbuilder.js"></script>
 </body>
 </html>

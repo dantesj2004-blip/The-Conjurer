@@ -1,17 +1,10 @@
-<!DOCTYPE html>
+// Variables globales
+        let allCardsData = []; // Todas las cartas cargadas del CSV
+        let deckCards = {};     // { cardId: count } - Cartas actualmente en el mazo
+        let currentPantheon = null; // Mitología del Panteón seleccionado
+        const CSV_FILE_PATH = "GDM-CARTAS - Hoja 1 (4).csv"; 
 
-<html lang="es">
-<head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Deckbuilder - The Conjurer: Guerra de Mitos</title>
-<link href="Logo.png" rel="icon" type="image/png"/>
-<link href="https://fonts.googleapis.com/css2?family=Metal+Mania&amp;display=swap" rel="stylesheet"/>
-<link href="GaleriaCSS.css" rel="stylesheet"/>
-<!-- Iconos Phosphor Icons para la interfaz -->
-<script src="https://unpkg.com/phosphor-icons">
-// === EXPORTAR / IMPORTAR DECK ===
-
+        // === EXPORTAR / IMPORTAR DECK ===
 
 function exportDeckToJSON() {
     const cardsInDeck = getCurrentDeckCardDetails();
@@ -32,7 +25,11 @@ function exportDeckToJSON() {
         return;
     }
 
-    const deckData = { deckCards, currentPantheon };
+    const deckData = { 
+        deckName: document.getElementById('deck-name').textContent || "Mi Mazo", // Incluir el nombre del mazo
+        deckCards, 
+        currentPantheon 
+    };
     const blob = new Blob([JSON.stringify(deckData, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -57,6 +54,14 @@ function importDeckFromJSON(event) {
             }
             deckCards = data.deckCards;
             currentPantheon = data.currentPantheon || null;
+            
+            // Importar nombre del mazo
+            if(data.deckName) {
+                const deckNameEl = document.getElementById('deck-name');
+                deckNameEl.textContent = data.deckName;
+                localStorage.setItem('gdmDeckName', data.deckName); // Guardar en local
+            }
+
             renderDeckList();
             renderPantheonInfo();
             alert("Deck importado correctamente ✅");
@@ -67,423 +72,10 @@ function importDeckFromJSON(event) {
     reader.readAsText(file);
 }
 
-// === MOVIMIENTO SUAVE DEL VISUALIZADOR ===
-document.addEventListener('DOMContentLoaded', () => {
-    const previewArea = document.querySelector('.card-preview-area');
-    if (!previewArea) return;
-    let targetY = 0;
-
-    window.addEventListener('scroll', () => {
-        const offset = window.scrollY * 0.9; // sensibilidad
-        targetY = offset;
-    });
-
-    function animatePreview() {
-        const currentTransform = previewArea.style.transform;
-        const currentY = currentTransform.includes('translateY')
-            ? parseFloat(currentTransform.replace(/[^0-9.-]/g, ''))
-            : 0;
-        const newY = currentY + (targetY - currentY) * 0.1; // suavizado
-        previewArea.style.transform = `translateY(${newY}px)`;
-        requestAnimationFrame(animatePreview);
-    }
-    animatePreview();
-});
-</script>
-<style>
-        /* Estilos específicos para la interfaz del Deckbuilder */
-        :root {
-            --primary-purple: #C873C4;
-            --secondary-green: #97E88D;
-            --background-dark: #1e1e1e;
-            --text-color: #fff;
-            --deck-bg: #2a2a2a;
-        }
-
-        .deckbuilder-container {
-            display: flex;
-            gap: 20px;
-            max-width: 1600px; /* Aumentar ancho para la preview */
-            margin: 20px auto;
-            padding: 0 20px;
-        }
-        
-        /* Nuevo contenedor para la preview */
-        .card-preview-area {
-            flex: 1; 
-            max-width: 300px;
-            background-color: var(--deck-bg);
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-        }
-        
-        #card-preview-image {
-            width: 100%;
-            height: auto;
-            min-height: 400px; /* Altura mínima para el placeholder */
-            object-fit: contain;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            background-color: #1e1e1e; /* Color de fondo mientras no hay imagen */
-            display: block;
-        }
-        
-        #card-preview-details {
-            margin-top: 10px;
-            text-align: center;
-            font-size: 0.9em;
-            color: #ccc;
-        }
-
-        .card-gallery, .deck-list {
-            padding: 15px;
-            border-radius: 10px;
-            background-color: var(--deck-bg);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-            min-height: 80vh;
-        }
-
-        .card-gallery {
-            flex: 2; /* Ocupa más espacio para mostrar la galería */
-            max-width: 700px;
-        }
-
-        .deck-list {
-            flex: 1; /* Ocupa el espacio restante */
-            max-width: 400px;
-        }
-
-        .filters-container {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap; /* Asegurar responsive */
-        }
-        
-        /* Estilos para los filtros */
-        .filter-input, .filter-select {
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #444;
-            background-color: #333;
-            color: var(--text-color);
-        }
-
-        /* === Gallery Grid === */
-        #gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
-        }
-
-        .card-gallery-item {
-            position: relative;
-            cursor: pointer;
-            border-radius: 5px;
-            overflow: hidden;
-            transition: transform 0.1s;
-        }
-        
-        .card-gallery-item:hover {
-            transform: scale(1.05);
-        }
-
-        .card-gallery-item img {
-            width: 100%;
-            height: auto;
-            display: block;
-            border-radius: 5px;
-        }
-        
-        .card-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 2em;
-            font-weight: bold;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .card-gallery-item:hover .card-overlay {
-            opacity: 1;
-        }
-
-        .card-count {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: var(--secondary-green);
-            color: black;
-            font-weight: bold;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 0.9em;
-            border: 2px solid var(--text-color);
-            z-index: 10;
-        }
-        
-        /* === Deck List === */
-        .deck-list h2 {
-            margin-top: 0;
-            color: var(--secondary-green);
-        }
-
-        .deck-section {
-            margin-bottom: 20px;
-            padding: 10px;
-            border: 1px solid #444;
-            border-radius: 5px;
-        }
-
-        .deck-section h3 {
-            color: var(--primary-purple);
-            border-bottom: 1px solid #444;
-            padding-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .deck-card-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 5px 0;
-            border-bottom: 1px dashed #333;
-        }
-
-        .deck-card-item:last-child {
-            border-bottom: none;
-        }
-
-        .card-name-btn {
-            background: none;
-            border: none;
-            color: var(--text-color);
-            cursor: pointer;
-            text-align: left;
-            flex-grow: 1;
-            font-size: 0.95em;
-        }
-        
-        .card-name-btn:hover {
-            color: var(--secondary-green);
-        }
-
-        .count-controls button {
-            background-color: var(--primary-purple);
-            color: white;
-            border: none;
-            border-radius: 3px;
-            padding: 2px 6px;
-            margin: 0 2px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .count-controls button:hover {
-            background-color: #55008b;
-        }
-
-        /* === Validación de Reglas === */
-        #validation-area {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            background-color: #331a1a;
-            border: 2px solid red;
-            transition: background-color 0.3s, border-color 0.3s;
-        }
-
-        #validation-area.valid {
-            background-color: #1a331a;
-            border-color: var(--secondary-green);
-        }
-
-        #validation-area h3 {
-            margin-top: 0;
-            color: var(--text-color);
-            font-size: 1.1em;
-        }
-        
-        .validation-item {
-            margin-bottom: 5px;
-            font-size: 0.9em;
-            display: flex;
-            align-items: center;
-        }
-        
-        .validation-item i {
-            margin-right: 8px;
-            font-size: 1.2em;
-        }
-        
-        .validation-ok { color: var(--secondary-green); }
-        .validation-error { color: #ff6347; }
-        
-        /* Estilos del Panteón Seleccionado */
-        #panteon-info {
-            margin-bottom: 15px;
-            padding: 10px;
-            border: 1px solid var(--secondary-green);
-            border-radius: 5px;
-            text-align: center;
-        }
-        #panteon-info .mitologia {
-            font-weight: bold;
-            color: var(--secondary-green);
-            font-size: 1.2em;
-        }
-        
-        .type-error {
-            color: #ff6347;
-            font-weight: bold;
-        }
-        
-        /* Media Queries para Responsive */
-        @media (max-width: 1200px) {
-             /* Ocultar Preview en pantallas pequeñas para dar espacio a galería y lista */
-            .card-preview-area {
-                display: none; 
-            }
-            .card-gallery {
-                max-width: none;
-                flex: 2;
-            }
-        }
-        
-        @media (max-width: 1024px) {
-            .deckbuilder-container {
-                flex-direction: column;
-            }
-            .card-gallery, .deck-list {
-                min-height: auto;
-                width: 100%;
-                max-width: none;
-            }
-        }
-    
-.card-preview-area {  top: 20px; }
-
-    .deck-actions {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-bottom: 10px;
-    }
-    </style>
-</head>
-<body>
-<header class="main-header">
-<div class="header-top-bar">
-<div class="auth-buttons">
-<a class="btn-auth btn-register" href="#">REGISTRARSE</a>
-<a class="btn-auth btn-login" href="index.html">ENTRAR</a>
-</div>
-</div>
-<div class="logo-area">
-<img alt="Logo The Conjurer" class="logo-main" src="Logo.png"/>
-</div>
-<nav class="main-nav">
-<a href="index.html">INICIO</a>
-<a href="Galeria.html">GALERÍA</a>
-<a class="active" href="#">DECKBUILDER</a>
-<a href="#">REGLAS</a>
-<a href="#">NOTICIAS</a>
-</nav>
-</header>
-<main class="deckbuilder-container">
-<!-- Área de Vista Previa de Carta (NUEVO) -->
-<div class="card-preview-area">
-<h3 style="color: var(--text-color); margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px;">Vista Previa</h3>
-<img alt="Vista previa de la carta seleccionada" id="card-preview-image" src="https://placehold.co/300x420/2a2a2a/ffffff?text=Selecciona+una+carta"/>
-<div id="card-preview-details">Haz clic en una carta para verla en grande.</div>
-</div>
-<!-- Galería de Cartas (Fuente de Datos) -->
-<div class="card-gallery">
-<h2>Galería de Cartas Disponibles</h2>
-<div id="panteon-info">
-<p><strong>Panteón Seleccionado:</strong> <span class="mitologia" id="current-pantheon">Ninguno</span></p>
-<p class="validation-item validation-error" id="pantheon-limit-msg"><i class="ph-bold ph-warning"></i> Solo se permite 1 Panteón.</p>
-</div>
-<!-- Filtros -->
-<div class="filters-container">
-<input class="filter-input" id="search-bar" placeholder="Buscar por Nombre o Habilidad..." type="text"/>
-<select class="filter-select" id="type-filter">
-<option value="">Todo Tipo</option>
-<option value="Panteón">Panteón</option>
-<option value="Personaje">Personaje</option>
-<option value="Recurso">Recurso</option>
-<option value="Evento">Evento</option>
-<option value="Acción">Acción</option>
-<option value="Invocación">Invocación</option>
-<option value="Equipo">Equipo</option>
-</select>
-<select class="filter-select" id="mythology-filter">
-<option value="">Toda Mitología</option>
-</select>
-<button class="btn-auth" onclick="applyFilters()">Aplicar Filtros</button>
-</div>
-<!-- Rejilla de Cartas para seleccionar -->
-<div id="gallery-grid">
-<p>Cargando cartas...</p>
-</div>
-</div>
-<!-- Lista de Mazos (Mazo de Dioses y Mazo de Designios) -->
-<div class="deck-list">
-<h2>Tu Mazo (Deck)</h2>
-<div class="deck-actions">
-<button class="btn-auth" onclick="exportDeckToJSON()">Exportar Deck</button>
-<input accept=".json" id="importDeckFile" onchange="importDeckFromJSON(event)" style="display:none" type="file"/>
-<button class="btn-auth" onclick="document.getElementById('importDeckFile').click()">Importar Deck</button>
-</div>
-<div class="deck-section" id="god-deck">
-<h3>Mazo de Dioses (<span id="god-deck-count">0</span>/20+)</h3>
-<div id="god-deck-cards">
-<p class="placeholder">Añade Panteón, Personajes, Recursos, Eventos aquí.</p>
-</div>
-</div>
-<div class="deck-section" id="destiny-deck">
-<h3>Mazo de Designios (<span id="destiny-deck-count">0</span>/30+)</h3>
-<div id="destiny-deck-cards">
-<p class="placeholder">Añade Cartas de Acción, Invocación, Equipo aquí.</p>
-</div>
-</div>
-<!-- Área de Validación de Reglas -->
-<div class="validation-error" id="validation-area">
-<h3>Estado de Validación (Batalla):</h3>
-<div class="validation-item validation-error" id="valid-pantheon"><i class="ph-bold ph-x"></i> Panteón Seleccionado: No</div>
-<div class="validation-item validation-error" id="valid-god-size"><i class="ph-bold ph-x"></i> Mazo de Dioses: Mínimo 20</div>
-<div class="validation-item validation-error" id="valid-destiny-size"><i class="ph-bold ph-x"></i> Mazo de Designios: Mínimo 30</div>
-<div class="validation-item validation-ok" id="valid-unique-cards"><i class="ph-bold ph-check"></i> Cartas Únicas: OK</div>
-<div class="validation-item validation-ok" id="valid-types"><i class="ph-bold ph-check"></i> Tipos de Cartas Correctos: OK</div>
-</div>
-</div>
-</main>
-<footer class="main-footer">
-<div class="footer-content">
-<p>© 2024 The Conjurer - Guerra de Mitos DeckBuilder. Todos los derechos reservados.</p>
-</div>
-</footer>
-<script>
-        // Variables globales
-        let allCardsData = []; // Todas las cartas cargadas del CSV
-        let deckCards = {};     // { cardId: count } - Cartas actualmente en el mazo
-        let currentPantheon = null; // Mitología del Panteón seleccionado
-        const CSV_FILE_PATH = "GDM-CARTAS - Hoja 1 (4).csv"; 
+// --- CORRECCIÓN 2: ELIMINADO EL BLOQUE DE JS DE SCROLL DEFECTUOSO ---
+/* El bloque que estaba aquí (calculando translateY) ha sido eliminado.
+    El scroll ahora se maneja 100% con CSS (position: sticky).
+*/
 
         // Restricciones del juego
         const MIN_GOD_DECK = 20;
@@ -504,6 +96,18 @@ document.addEventListener('DOMContentLoaded', () => {
             loadCards(CSV_FILE_PATH);
             // Añadir listener a la barra de búsqueda para filtrar instantáneamente
             document.getElementById('search-bar').addEventListener('input', applyFilters);
+
+            // --- NUEVO: Cargar y Guardar Nombre del Mazo ---
+            setupDeckNameEditor();
+
+            // --- CORRECCIÓN DE BINDING ---
+            // Añadimos el listener para el botón de TTS aquí
+            const ttsButton = document.getElementById("export-tts-btn");
+            if (ttsButton) {
+                 ttsButton.addEventListener("click", exportDeckToTTS);
+            } else {
+                console.error("No se encontró el botón #export-tts-btn");
+            }
         });
 
         // --- FUNCIONES DE CARGA Y PARSEO ---
@@ -574,7 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     mythologyFilter.appendChild(option);
                 });
                 
-                renderGallery(); // Renderizar la galería inicial
+                renderGallery();
+                window.cardsImported = allCardsData; // Renderizar la galería inicial
                 
             } catch (error) {
                 console.error('Error al cargar o procesar el CSV:', error);
@@ -589,8 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const previewImg = document.getElementById('card-preview-image');
             const previewDetails = document.getElementById('card-preview-details');
 
-            // Usar la URL del CSV tal como está
-            const imgUrl = card['URL-IMG'];
+            const imgUrl = card['URL-IMG'] || 'https://placehold.co/300x420/3b0066/ffffff?text=Carta+GDM';
             
             previewImg.src = imgUrl;
             previewImg.alt = `Vista previa de ${card.Nombre}`;
@@ -635,9 +239,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.setAttribute('title', `Clic para añadir ${card.Nombre}`);
 
                 const imgElement = document.createElement('img');
-                // Usar la URL del CSV tal como está
-                imgElement.src = card['URL-IMG'];
+                imgElement.src = card['URL-IMG'] || 'https://placehold.co/100x150/3b0066/ffffff?text=Carta+GDM';
                 imgElement.alt = `Carta ${card.Nombre}`;
+                imgElement.onerror = () => { imgElement.src = 'https://placehold.co/100x150/3b0066/ffffff?text=Imagen+GDM'; };
 
                 container.appendChild(imgElement);
 
@@ -952,6 +556,184 @@ document.addEventListener('DOMContentLoaded', () => {
             el.classList.add(isValid ? 'validation-ok' : 'validation-error');
             el.innerHTML = `<i class="ph-bold ph-${isValid ? 'check' : 'x'}"></i> ${text}`;
         }
-    </script>
-</body>
-</html>
+        
+        // --- NUEVO: Lógica para el nombre del Mazo ---
+        function setupDeckNameEditor() {
+            const deckNameEl = document.getElementById('deck-name');
+            if (!deckNameEl) return;
+
+            // 1. Cargar nombre guardado de localStorage
+            const savedName = localStorage.getItem('gdmDeckName');
+            if (savedName) {
+                deckNameEl.textContent = savedName;
+            }
+
+            // 2. Guardar nombre al dejar de editar (blur)
+            deckNameEl.addEventListener('blur', () => {
+                const newName = deckNameEl.textContent.trim();
+                if (newName) {
+                    localStorage.setItem('gdmDeckName', newName);
+                } else {
+                    deckNameEl.textContent = "Tu Mazo"; // Evitar que quede vacío
+                    localStorage.setItem('gdmDeckName', "Tu Mazo");
+                }
+            });
+
+            // 3. Limpiar pegado (paste) para evitar HTML
+            deckNameEl.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+                document.execCommand('insertText', false, text);
+            });
+
+            // 4. Prevenir salto de línea con 'Enter' y terminar edición
+            deckNameEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    deckNameEl.blur(); // Termina la edición
+                }
+            });
+        }
+        
+        // --- CÓDIGO MOVIDO FUERA DE setupDeckNameEditor ---
+
+        // Parche runtime: rellena data-src en las miniaturas desde window.cardsImported si existe
+        (function fillDataSrcFromCSV() {
+          function run() {
+            if (!window.cardsImported || !Array.isArray(window.cardsImported)) return;
+
+            const imgs = document.querySelectorAll('#gallery-grid .card-gallery-item img, #gallery-grid img');
+            imgs.forEach((img, idx) => {
+              if (!img) return;
+              if (img.getAttribute('data-src')?.trim()) return;
+
+              const row = window.cardsImported[idx];
+              if (!row) return;
+
+              const csvPath = row['URL-IMG']?.trim();
+              if (csvPath) {
+                img.setAttribute('data-src', csvPath);
+                img.dataset.img = csvPath;
+              }
+            });
+          }
+
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', run);
+          } else {
+            run();
+          }
+        })();
+
+
+        // --- FUNCIONES DE EXPORTACIÓN A TTS (CORREGIDAS) ---
+
+        /**
+         * CORRECCIÓN DE LÓGICA:
+         * Obtiene las URLs de las cartas, repitiéndolas según la cantidad (count)
+         * en el mazo, que es como lo necesita TTS.
+         */
+        function getCardImageURLs(deckType) {
+            const cards = getCurrentDeckCardDetails()
+                .filter(c => getCardDeckType(c.Tipo) === deckType);
+
+            const urls = [];
+            
+            cards.forEach(card => {
+                let img = card["URL-IMG"]?.trim();
+                if (img) {
+                    // Limpia errores comunes del CSV (espacios accidentales)
+                    img = img.replace(/\s+/g, "");
+                    
+                    // Añade la URL 'count' veces
+                    for (let i = 0; i < card.count; i++) {
+                        urls.push(img);
+                    }
+                }
+            });
+
+            return urls; // Retorna un array [img1, img1, img1, img2]
+        }
+
+        // Crea lienzo grande para TTS
+        async function createDeckCanvas(urls, cols = 10) {
+          const cardImgs = await Promise.all(urls.map(src => new Promise(resolve => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(null); // Resuelve null si la imagen falla
+            img.src = src;
+          })));
+
+          const validImgs = cardImgs.filter(img => img !== null);
+          if (validImgs.length === 0) return null;
+
+          // Intenta obtener las dimensiones de la primera imagen válida
+          const cardWidth = validImgs[0].width > 0 ? validImgs[0].width : 300; // Fallback width
+          const cardHeight = validImgs[0].height > 0 ? validImgs[0].height : 420; // Fallback height
+          const rows = Math.ceil(validImgs.length / cols);
+
+          const canvas = document.createElement("canvas");
+          canvas.width = cols * cardWidth;
+          canvas.height = rows * cardHeight;
+          const ctx = canvas.getContext("2d");
+
+          validImgs.forEach((img, i) => {
+            const x = (i % cols) * cardWidth;
+            const y = Math.floor(i / cols) * cardHeight;
+            ctx.drawImage(img, x, y, cardWidth, cardHeight);
+          });
+
+          return canvas;
+        }
+
+        // Exporta ambos mazos en un ZIP listo para importar en TTS
+        async function exportDeckToTTS() {
+          console.log("Iniciando exportación a TTS...");
+          const godURLs = getCardImageURLs("god");
+          const destinyURLs = getCardImageURLs("destiny");
+
+          console.log(`Mazo Dioses: ${godURLs.length} cartas`, godURLs);
+          console.log(`Mazo Designios: ${destinyURLs.length} cartas`, destinyURLs);
+
+          if (godURLs.length === 0 && destinyURLs.length === 0) {
+            alert("⚠️ No hay cartas en el mazo para exportar.");
+            return;
+          }
+
+          const zip = new JSZip();
+          let filesGenerated = false;
+
+          if (godURLs.length > 0) {
+            const canvasGod = await createDeckCanvas(godURLs);
+            if (canvasGod) {
+                const dataGod = canvasGod.toDataURL("image/png").split(",")[1];
+                zip.file("mazo_dioses.png", dataGod, { base64: true });
+                filesGenerated = true;
+            } else {
+                console.error("No se pudo generar el canvas para el Mazo de Dioses (quizás las imágenes fallaron).");
+            }
+          }
+
+          if (destinyURLs.length > 0) {
+            const canvasDestiny = await createDeckCanvas(destinyURLs);
+             if (canvasDestiny) {
+                const dataDestiny = canvasDestiny.toDataURL("image/png").split(",")[1];
+                zip.file("mazo_designios.png", dataDestiny, { base64: true });
+                filesGenerated = true;
+             } else {
+                 console.error("No se pudo generar el canvas para el Mazo de Designios.");
+             }
+          }
+          
+          if (!filesGenerated) {
+              alert("⚠️ Error: No se pudo generar ningún archivo de imagen. Revisa la consola (F12) por errores de carga de imágenes.");
+              return;
+          }
+
+          const blob = await zip.generateAsync({ type: "blob" });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "deck_tts.zip";
+          a.click();
+          URL.revokeObjectURL(a.href);
+        }

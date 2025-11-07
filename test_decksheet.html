@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Decksheet TTS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1b1b1b;
+            color: #eee;
+            padding: 20px;
+        }
+        .test-panel {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        button {
+            background: #0078ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005fcc;
+        }
+        #preview {
+            margin-top: 20px;
+            text-align: center;
+        }
+        #preview img {
+            max-width: 100%;
+            border: 1px solid #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-panel">
+        <h1>Test Decksheet TTS Generator</h1>
+        <p>Esta página prueba la funcionalidad de generación de decksheet para Tabletop Simulator.</p>
+        
+        <button onclick="testWithFewCards()">Probar con 5 cartas</button>
+        <button onclick="testWithManyCards()">Probar con 30 cartas</button>
+        <button onclick="testWithMaxCards()">Probar con 70 cartas</button>
+        
+        <div id="preview"></div>
+    </div>
+
+    <script>
+        // Función simplificada para crear decksheet de prueba
+        async function createTestDecksheet(numCards) {
+            const cardWidth = 250;
+            const cardHeight = 350;
+            const cols = 10;
+            const rows = 7;
+            const maxCards = 70;
+            
+            // Crear canvas principal
+            const canvas = document.createElement("canvas");
+            canvas.width = cols * cardWidth; // 2500px
+            canvas.height = rows * cardHeight; // 2450px
+            const ctx = canvas.getContext("2d");
+            
+            // Crear carta en blanco
+            const blankCardCanvas = document.createElement("canvas");
+            blankCardCanvas.width = cardWidth;
+            blankCardCanvas.height = cardHeight;
+            const blankCtx = blankCardCanvas.getContext("2d");
+            blankCtx.fillStyle = "#2a2a2a";
+            blankCtx.fillRect(0, 0, cardWidth, cardHeight);
+            blankCtx.strokeStyle = "#666";
+            blankCtx.lineWidth = 2;
+            blankCtx.strokeRect(1, 1, cardWidth-2, cardHeight-2);
+            blankCtx.fillStyle = "#999";
+            blankCtx.font = "16px Arial";
+            blankCtx.textAlign = "center";
+            blankCtx.fillText("BLANK", cardWidth/2, cardHeight/2);
+            
+            // Crear cartas de prueba
+            const testCards = [];
+            for (let i = 0; i < numCards; i++) {
+                const cardCanvas = document.createElement("canvas");
+                cardCanvas.width = cardWidth;
+                cardCanvas.height = cardHeight;
+                const cardCtx = cardCanvas.getContext("2d");
+                
+                // Color de fondo aleatorio
+                const colors = ["#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#feca57"];
+                cardCtx.fillStyle = colors[i % colors.length];
+                cardCtx.fillRect(0, 0, cardWidth, cardHeight);
+                
+                // Borde
+                cardCtx.strokeStyle = "#333";
+                cardCtx.lineWidth = 3;
+                cardCtx.strokeRect(0, 0, cardWidth, cardHeight);
+                
+                // Texto
+                cardCtx.fillStyle = "#fff";
+                cardCtx.font = "bold 20px Arial";
+                cardCtx.textAlign = "center";
+                cardCtx.fillText(`CARTA ${i + 1}`, cardWidth/2, cardHeight/2);
+                
+                testCards.push(cardCanvas);
+            }
+            
+            // Rellenar con cartas en blanco hasta 70
+            while (testCards.length < maxCards) {
+                testCards.push(blankCardCanvas);
+            }
+            
+            // Dibujar todas las cartas en el canvas principal
+            testCards.forEach((card, i) => {
+                const x = (i % cols) * cardWidth;
+                const y = Math.floor(i / cols) * cardHeight;
+                ctx.drawImage(card, x, y);
+            });
+            
+            return canvas;
+        }
+        
+        async function testWithFewCards() {
+            console.log("Probando con 5 cartas...");
+            const canvas = await createTestDecksheet(5);
+            displayResult(canvas, 5);
+        }
+        
+        async function testWithManyCards() {
+            console.log("Probando con 30 cartas...");
+            const canvas = await createTestDecksheet(30);
+            displayResult(canvas, 30);
+        }
+        
+        async function testWithMaxCards() {
+            console.log("Probando con 70 cartas...");
+            const canvas = await createTestDecksheet(70);
+            displayResult(canvas, 70);
+        }
+        
+        function displayResult(canvas, numCards) {
+            const preview = document.getElementById('preview');
+            const img = document.createElement('img');
+            img.src = canvas.toDataURL();
+            img.style.maxWidth = '600px';
+            
+            preview.innerHTML = `
+                <h3>Resultado: ${numCards} cartas reales + ${70 - numCards} cartas en blanco</h3>
+                <p>Resolución: ${canvas.width}x${canvas.height} píxeles (10x7 cuadrícula)</p>
+                <p>Cada carta: 250x350 píxeles</p>
+            `;
+            preview.appendChild(img);
+            
+            // Botón para descargar
+            const downloadBtn = document.createElement('button');
+            downloadBtn.textContent = 'Descargar Decksheet';
+            downloadBtn.onclick = () => {
+                canvas.toBlob(blob => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `test_decksheet_${numCards}_cards.png`;
+                    a.click();
+                });
+            };
+            preview.appendChild(downloadBtn);
+        }
+    </script>
+</body>
+</html>

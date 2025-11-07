@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REGLAS - The Conjurer: Guerra de Mitos</title>
+    <link rel="icon" type="image/png" href="Logo.png"> 
+    <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="GaleriaCSS.css">
+    
+    <style>
+        /* Variables del CSS principal para consistencia */
+        :root {
+            --primary-purple: #C873C4;
+            --secondary-green: #97E88D;
+            --background-dark: #1e1e1e;
+            --text-color: #fff;
+            --title-font: 'Metal Mania', cursive;
+            --text-body-font: 'Montserrat', sans-serif;
+        }
+        
+        body {
+            font-family: var(--text-body-font); 
+        }
+
+        /* Estilos específicos para la página de reglas */
+        .rules-content {
+            padding: 40px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .rules-title {
+            text-align: center;
+            font-family: var(--title-font);
+            color: var(--primary-purple);
+            margin-bottom: 40px;
+            font-size: 3em;
+            text-shadow: 0 0 10px rgba(200, 115, 196, 0.5);
+        }
+
+        .rules-description {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .pdf-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .pdf-viewer {
+            width: 100%;
+            height: 800px;
+            border: none;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .pdf-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .pdf-btn {
+            background: linear-gradient(to bottom, var(--primary-purple), #8B4A8B);
+            color: var(--text-color);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-family: var(--title-font);
+            font-size: 1.1em;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .pdf-btn:hover {
+            filter: brightness(1.2);
+            transform: translateY(-2px);
+        }
+
+        .pdf-btn.secondary {
+            background: linear-gradient(to bottom, var(--secondary-green), #6BB85F);
+        }
+
+        .fallback-message {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .fallback-message h3 {
+            color: var(--secondary-green);
+            font-family: var(--title-font);
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+
+        .fallback-message p {
+            color: var(--text-color);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .rules-title {
+                font-size: 2.2em;
+            }
+            
+            .pdf-viewer {
+                height: 600px;
+            }
+            
+            .pdf-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .pdf-btn {
+                width: 200px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .rules-content {
+                padding: 20px 10px;
+            }
+            
+            .rules-title {
+                font-size: 1.8em;
+            }
+            
+            .pdf-viewer {
+                height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <header class="main-header">
+        <div class="header-top-bar">
+            <div class="auth-buttons">
+                <a href="#" class="btn-auth btn-register">REGISTRARSE</a>
+                <a href="Login.html" class="btn-auth btn-login">ENTRAR</a>
+            </div>
+        </div>
+        
+        <div class="logo-area">
+            <img src="Logo.png" alt="Logo The Conjurer" class="logo-main">
+        </div>
+        
+        <nav class="main-nav">
+            <a href="index.html">INICIO</a>
+            <a href="Galeria.html">GALERÍA</a>
+            <a href="deckbuilder.html">DECKBUILDER</a>
+            <a href="#" class="active">REGLAS</a>
+            <a href="#">NOTICIAS</a>
+        </nav>
+    </header>
+    
+    <main class="rules-content">
+        <h1 class="rules-title">Reglas de Guerra de Mitos</h1>
+        
+        <p class="rules-description">
+            Consulta las reglas oficiales de Guerra de Mitos (GDM) para dominar este fascinante juego de cartas de estrategia. 
+            Aquí encontrarás toda la información necesaria para construir mazos, entender las mecánicas de juego y convertirte en un verdadero conjurador.
+        </p>
+
+        <div class="pdf-controls">
+            <a href="reglas.pdf" target="_blank" class="pdf-btn">
+                📖 Abrir en Nueva Pestaña
+            </a>
+            <a href="reglas.pdf" download class="pdf-btn secondary">
+                💾 Descargar PDF
+            </a>
+        </div>
+
+        <div class="pdf-container">
+            <iframe 
+                src="reglas.pdf" 
+                class="pdf-viewer"
+                title="Reglas de Guerra de Mitos"
+                loading="lazy">
+            </iframe>
+            
+            <!-- Mensaje de respaldo para navegadores que no soportan iframe con PDF -->
+            <div class="fallback-message" style="display: none;" id="fallback">
+                <h3>⚠️ Visualización no disponible</h3>
+                <p>Tu navegador no puede mostrar el PDF directamente. Puedes:</p>
+                <div class="pdf-controls">
+                    <a href="reglas.pdf" target="_blank" class="pdf-btn">
+                        📖 Ver en Nueva Pestaña
+                    </a>
+                    <a href="reglas.pdf" download class="pdf-btn secondary">
+                        💾 Descargar PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
+            <h3 style="color: var(--secondary-green); font-family: var(--title-font); margin-bottom: 15px;">
+                💡 Consejo para Nuevos Jugadores
+            </h3>
+            <p style="color: var(--text-color); line-height: 1.6;">
+                Si eres nuevo en Guerra de Mitos, te recomendamos leer primero las reglas básicas y luego usar nuestro 
+                <a href="deckbuilder.html" style="color: var(--primary-purple); text-decoration: none; font-weight: bold;">Deckbuilder</a> 
+                para construir tu primer mazo. ¡La aventura te espera!
+            </p>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>THE CONJURER</h3>
+                <p>GDM DeckBuilder Project © 2025</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Script para detectar si el iframe puede cargar el PDF
+        document.addEventListener('DOMContentLoaded', function() {
+            const iframe = document.querySelector('.pdf-viewer');
+            const fallback = document.getElementById('fallback');
+            
+            // Timeout para mostrar mensaje de respaldo si el PDF no carga
+            setTimeout(function() {
+                // Verificar si el iframe está cargado correctamente
+                try {
+                    if (iframe.contentDocument === null) {
+                        // El PDF no se puede cargar en iframe, mostrar respaldo
+                        iframe.style.display = 'none';
+                        fallback.style.display = 'block';
+                    }
+                } catch (e) {
+                    // Error de acceso, probablemente el PDF se está mostrando
+                    // No hacer nada, el iframe debería funcionar
+                }
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

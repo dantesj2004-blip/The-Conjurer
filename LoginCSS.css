@@ -52,6 +52,29 @@ body {
     z-index: 10;
 }
 
+/* Media Query para logo responsive en login */
+@media (max-width: 768px) {
+    .logo-top-left {
+        max-width: 150px;
+        top: 20px;
+        left: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo-top-left {
+        max-width: 120px;
+        top: 15px;
+        left: 15px;
+    }
+    
+    .login-box {
+        width: 90%;
+        max-width: 300px;
+        padding: 30px 20px;
+    }
+}
+
 /* Contenedor que centra el formulario */
 .login-center-container {
     display: flex;

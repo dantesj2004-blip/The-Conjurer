@@ -120,93 +120,197 @@ function importDeckFromJSON(event) {
 
         async function loadCards(filePath) {
             const galleryGrid = document.getElementById('gallery-grid');
+            if (!galleryGrid) {
+                console.error('Error: No se encontró el elemento gallery-grid');
+                return;
+            }
+            
             galleryGrid.innerHTML = '<p>Cargando datos...</p>';
             
             try {
+                console.log('Iniciando carga de cartas desde:', filePath);
                 const csvText = await fetchCSV(filePath);
+                console.log('CSV cargado exitosamente, tamaño:', csvText.length, 'caracteres');
+                
                 const rows = csvText.trim().split('\n');
+                console.log('Número de filas encontradas:', rows.length);
                 
                 if (rows.length < 2) {
+                    console.warn('CSV vacío o sin datos');
                     galleryGrid.innerHTML = '<p>El CSV está vacío.</p>';
                     return;
                 }
                 
-                // Limpiar encabezados
-                const headers = rows[0].split(',').map(h => h.trim().replace(/['"\r]/g, ''));
+                // Limpiar encabezados con mejor manejo de caracteres especiales
+                const headers = rows[0].split(',').map(h => h.trim().replace(/['"\r\n]/g, ''));
+                console.log('Encabezados encontrados:', headers);
                 
-                allCardsData = rows.slice(1).map(row => {
+                allCardsData = rows.slice(1).map((row, index) => {
                     if (row.trim() === '') return null;
                     
-                    // Usamos la expresión regular para manejar comas dentro de comillas
-                    const values = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                    
-                    let card = {};
-                    headers.forEach((header, i) => {
-                        let value = values[i] ? values[i].trim() : '';
+                    try {
+                        // Mejorado parseo CSV con mejor manejo de comillas
+                        const values = [];
+                        let current = '';
+                        let inQuotes = false;
                         
-                        // Limpiar comillas iniciales y finales si existen
-                        if (value.startsWith('"') && value.endsWith('"')) {
-                            value = value.substring(1, value.length - 1);
+                        for (let i = 0; i < row.length; i++) {
+                            const char = row[i];
+                            if (char === '"') {
+                                inQuotes = !inQuotes;
+                            } else if (char === ',' && !inQuotes) {
+                                values.push(current.trim());
+                                current = '';
+                            } else {
+                                current += char;
+                            }
                         }
+                        values.push(current.trim()); // Agregar el último valor
                         
-                        card[header] = value;
-                    });
-                    
-                    // Asignamos un ID único por si acaso
-                    card.ID = card.ID || crypto.randomUUID(); 
-                    // Normalizamos las claves para facilitar la búsqueda de "Único"
-                    card.Claves = card.Claves ? card.Claves.toUpperCase() : ''; 
-                    
-                    return card;
+                        let card = {};
+                        headers.forEach((header, i) => {
+                            let value = values[i] || '';
+                            
+                            // Limpiar comillas iniciales y finales si existen
+                            if (value.startsWith('"') && value.endsWith('"')) {
+                                value = value.substring(1, value.length - 1);
+                            }
+                            
+                            card[header] = value;
+                        });
+                        
+                        // Asignamos un ID único por si acaso
+                        card.ID = card.ID || crypto.randomUUID(); 
+                        // Normalizamos las claves para facilitar la búsqueda de "Único"
+                        card.Claves = card.Claves ? card.Claves.toUpperCase() : ''; 
+                        
+                        return card;
+                    } catch (parseError) {
+                        console.warn(`Error parseando fila ${index + 2}:`, parseError, 'Fila:', row);
+                        return null;
+                    }
                 }).filter(card => card && card.Tipo && card.Nombre);
 
-                // Llenar el filtro de mitología
+                console.log('Cartas procesadas exitosamente:', allCardsData.length);
+
+                // Llenar el filtro de mitología con validación
                 const mythologyFilter = document.getElementById('mythology-filter');
-                const mythologies = [...new Set(allCardsData.map(c => c.Mitologia).filter(m => m && m.trim() !== ''))].sort();
-                mythologies.forEach(m => {
-                    const option = document.createElement('option');
-                    option.value = m;
-                    option.textContent = m;
-                    mythologyFilter.appendChild(option);
-                });
+                if (mythologyFilter) {
+                    // Limpiar opciones existentes (excepto la primera)
+                    const firstOption = mythologyFilter.firstElementChild;
+                    mythologyFilter.innerHTML = '';
+                    if (firstOption) {
+                        mythologyFilter.appendChild(firstOption);
+                    } else {
+                        // Crear opción por defecto si no existe
+                        const defaultOption = document.createElement('option');
+                        defaultOption.value = '';
+                        defaultOption.textContent = 'Toda Mitología';
+                        mythologyFilter.appendChild(defaultOption);
+                    }
+                    
+                    const mythologies = [...new Set(allCardsData.map(c => c.Mitologia).filter(m => m && m.trim() !== ''))].sort();
+                    console.log('Mitologías encontradas:', mythologies);
+                    
+                    mythologies.forEach(m => {
+                        const option = document.createElement('option');
+                        option.value = m;
+                        option.textContent = m;
+                        mythologyFilter.appendChild(option);
+                    });
+                } else {
+                    console.warn('No se encontró el elemento mythology-filter');
+                }
                 
-                renderGallery(); // Renderizar la galería inicial
+                renderGallery();
+                window.cardsImported = allCardsData; // Renderizar la galería inicial
+                console.log('Carga de cartas completada exitosamente');
                 
             } catch (error) {
                 console.error('Error al cargar o procesar el CSV:', error);
-                galleryGrid.innerHTML = '<p style="color: red;">Error al cargar las cartas.</p>';
+                galleryGrid.innerHTML = '<p style="color: red;">Error al cargar las cartas: ' + error.message + '</p>';
             }
         }
 
         // --- FUNCIONES DE RENDERIZADO ---
+        
+        // Función para corregir rutas de imágenes (igual que en Galeria.html)
+        function correctImagePath(originalPath, cardName, mythology) {
+            if (!originalPath) return 'https://placehold.co/300x420/3b0066/ffffff?text=' + encodeURIComponent(cardName);
+            
+            // Limpiar espacios extra en la ruta original
+            let correctedPath = originalPath.trim();
+            
+            // Caso especial para mitología Japonesa y Nórdica - usar placeholder ya que los archivos reales son .jpg numerados
+            if (mythology && (mythology.toLowerCase().includes('japonesa') || mythology.toLowerCase().includes('nórdica'))) {
+                return 'https://placehold.co/300x420/3b0066/ffffff?text=' + encodeURIComponent(cardName);
+            }
+            
+            // Para otras mitologías, intentar corregir espacios antes de la extensión
+            correctedPath = correctedPath.replace(/\s+\.png$/, '.png');
+            correctedPath = correctedPath.replace(/\s+\.jpg$/, '.jpg');
+            
+            return correctedPath;
+        }
         
         // Nueva función para mostrar la carta en grande
         function displayCardPreview(card) {
             const previewImg = document.getElementById('card-preview-image');
             const previewDetails = document.getElementById('card-preview-details');
 
-            const imgUrl = card['URL-IMG'] || 'https://placehold.co/300x420/3b0066/ffffff?text=Carta+GDM';
-            
-            previewImg.src = imgUrl;
-            previewImg.alt = `Vista previa de ${card.Nombre}`;
-            previewDetails.innerHTML = `<strong>${card.Nombre}</strong> - ${card.Tipo} (${card.Mitologia})`;
-            
-            // Fallback en caso de error de imagen
-            previewImg.onerror = () => { 
-                previewImg.src = 'https://placehold.co/300x420/3b0066/ffffff?text=Imagen+No+Disp.'; 
-                previewDetails.innerHTML = `<strong>${card.Nombre}</strong> - Imagen no encontrada.`;
-            };
+            if (!previewImg || !previewDetails) {
+                console.warn('No se encontraron los elementos de vista previa de carta');
+                return;
+            }
+
+            if (!card) {
+                console.warn('No se proporcionó carta para mostrar en vista previa');
+                return;
+            }
+
+        // Corregir la ruta de la imagen usando la función de corrección
+        const cardName = card.Nombre || 'Carta Sin Nombre';
+        const correctedImgUrl = correctImagePath(card['URL-IMG'], cardName, card.Mitologia);
+        
+        previewImg.src = correctedImgUrl;
+        previewImg.alt = `Vista previa de ${cardName}`;
+        
+        // Mostrar información detallada de la carta con validación
+        let cardInfo = `<strong>${cardName}</strong><br>`;
+        cardInfo += `<em>${card.Tipo || 'Tipo Desconocido'} - ${card.Mitologia || 'Mitología Desconocida'}</em><br>`;
+        if (card.Coste) cardInfo += `Coste: ${card.Coste}<br>`;
+        if (card.Fuerza) cardInfo += `Fuerza: ${card.Fuerza}<br>`;
+        if (card.Poder) cardInfo += `Poder: ${card.Poder}<br>`;
+        if (card.Claves) cardInfo += `Claves: ${card.Claves}<br>`;
+        if (card['Texto - Habilidades']) cardInfo += `<br><small>${card['Texto - Habilidades']}</small>`;
+        
+        previewDetails.innerHTML = cardInfo;
+        
+        // Fallback en caso de error de imagen - usar placeholder con el nombre de la carta
+        previewImg.onerror = () => { 
+            previewImg.src = 'https://placehold.co/300x420/3b0066/ffffff?text=' + encodeURIComponent(cardName); 
+        };
         }
 
         function renderGallery(filterTerm = '', filterType = '', filterMythology = '') {
             const galleryGrid = document.getElementById('gallery-grid');
+            if (!galleryGrid) {
+                console.error('Error: No se encontró el elemento gallery-grid en renderGallery');
+                return;
+            }
+            
             galleryGrid.innerHTML = ''; 
             
+            if (!allCardsData || allCardsData.length === 0) {
+                galleryGrid.innerHTML = '<p>No hay cartas cargadas. Verifica que el archivo CSV se haya cargado correctamente.</p>';
+                return;
+            }
+            
             const filteredCards = allCardsData.filter(card => {
-                // 1. Filtro de búsqueda
+                // 1. Filtro de búsqueda con validación de campos
                 const searchTermMatch = !filterTerm || 
-                                        card.Nombre.toUpperCase().includes(filterTerm.toUpperCase()) ||
-                                        card['Texto - Habilidades'].toUpperCase().includes(filterTerm.toUpperCase());
+                                        (card.Nombre && card.Nombre.toUpperCase().includes(filterTerm.toUpperCase())) ||
+                                        (card['Texto - Habilidades'] && card['Texto - Habilidades'].toUpperCase().includes(filterTerm.toUpperCase()));
 
                 // 2. Filtro por Tipo
                 const typeMatch = !filterType || card.Tipo === filterType;
@@ -227,12 +331,12 @@ function importDeckFromJSON(event) {
                 const container = document.createElement('div');
                 container.classList.add('card-gallery-item');
                 container.setAttribute('data-id', card.ID);
-                container.setAttribute('title', `Clic para añadir ${card.Nombre}`);
-
-                const imgElement = document.createElement('img');
-                imgElement.src = card['URL-IMG'] || 'https://placehold.co/100x150/3b0066/ffffff?text=Carta+GDM';
-                imgElement.alt = `Carta ${card.Nombre}`;
-                imgElement.onerror = () => { imgElement.src = 'https://placehold.co/100x150/3b0066/ffffff?text=Imagen+GDM'; };
+                container.setAttribute('title', `Clic para añadir ${card.Nombre}`);            const imgElement = document.createElement('img');
+            // Corregir la ruta de la imagen usando la función de corrección
+            const correctedImagePath = correctImagePath(card['URL-IMG'], card.Nombre, card.Mitologia);
+            imgElement.src = correctedImagePath;
+            imgElement.alt = `Carta ${card.Nombre}`;
+            imgElement.onerror = () => { imgElement.src = 'https://placehold.co/100x150/3b0066/ffffff?text=' + encodeURIComponent(card.Nombre); };
 
                 container.appendChild(imgElement);
 
@@ -584,34 +688,306 @@ function importDeckFromJSON(event) {
                     deckNameEl.blur(); // Termina la edición
                 }
             });
+        }
 
-            // Parche runtime: rellena data-src en las miniaturas desde window.cardsImported si existe
+        // --- FUNCIONES DE EXPORTACIÓN TTS ---
+
+        // Parche runtime: rellena data-src en las miniaturas desde window.cardsImported si existe
 (function fillDataSrcFromCSV() {
-  // Esperar a DOMContentLoaded si hace falta
   function run() {
     if (!window.cardsImported || !Array.isArray(window.cardsImported)) return;
+
     const imgs = document.querySelectorAll('#gallery-grid .card-gallery-item img, #gallery-grid img');
-    // Si hay igual o más imágenes que filas CSV, mapear por índice
     imgs.forEach((img, idx) => {
       if (!img) return;
-      if (img.getAttribute('data-src') && img.getAttribute('data-src').trim()) return;
+      if (img.getAttribute('data-src')?.trim()) return;
+
       const row = window.cardsImported[idx];
       if (!row) return;
-      // usar columna URL-IMG (ajusta la clave si tu parser usa otra)
-      const csvPath = row['URL-IMG'] || row.URL_IMG || row.urlImg || row.url_img || null;
+
+      const csvPath = row['URL-IMG']?.trim();
       if (csvPath) {
-        // normalizar espacios extra
-        const p = String(csvPath).trim();
-        if (p) {
-          img.setAttribute('data-src', p);
-          img.dataset.img = p;
-        }
+        // Usar la URL del CSV tal como está
+        img.setAttribute('data-src', csvPath);
+        img.dataset.img = csvPath;
       }
     });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
-  else run();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
 })();
-            
+
+function getCardImageURLs(deckType) {
+  const allCards = window.cardsImported || [];
+  const deckContainer = document.getElementById(
+    deckType === "god" ? "god-deck-cards" : "destiny-deck-cards"
+  );
+
+  const cardNames = [...deckContainer.querySelectorAll(".card-name-btn")].map(btn => {
+    const fullText = btn.textContent.trim();
+    return fullText.split("(")[0].trim();
+  });
+
+  return cardNames.map(name => {
+    const card = allCards.find(c => c.Nombre && c.Nombre.trim() === name);
+    if (!card) return null;
+    let img = card["URL-IMG"]?.trim();
+    if (!img) return null;
+    // Usar la URL del CSV tal como está
+    return img;
+  }).filter(Boolean);
+}
+
+
+async function createDeckCanvas(urls, cols = 10, cardWidth = 300, cardHeight = 420) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const rows = Math.ceil(urls.length / cols);
+
+  canvas.width = cols * cardWidth;
+  canvas.height = rows * cardHeight;
+
+  for (let i = 0; i < urls.length; i++) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = urls[i];
+
+    await new Promise(resolve => {
+      img.onload = () => {
+        const x = (i % cols) * cardWidth;
+        const y = Math.floor(i / cols) * cardHeight;
+        ctx.drawImage(img, x, y, cardWidth, cardHeight);
+        resolve();
+      };
+      img.onerror = resolve;
+    });
+  }
+
+  return canvas;
+}
+
+async function exportDeckToTTS() {
+  const allCards = window.cardsImported || [];
+
+  if (!Array.isArray(allCards) || allCards.length === 0) {
+    alert("No se han cargado las cartas desde el CSV.");
+    return;
+  }
+
+  const godURLs = getCardImageURLs("god");
+  const destinyURLs = getCardImageURLs("destiny");
+
+  if (godURLs.length === 0 && destinyURLs.length === 0) {
+    alert("No hay cartas en el mazo para exportar.");
+    return;
+  }
+
+  const zip = new JSZip();
+
+  if (godURLs.length > 0) {
+    const godCanvas = await createDeckCanvas(godURLs);
+    const godData = godCanvas.toDataURL("image/png").split(",")[1];
+    zip.file("mazo_dioses.png", godData, { base64: true });
+  }
+
+  if (destinyURLs.length > 0) {
+    const destinyCanvas = await createDeckCanvas(destinyURLs);
+    const destinyData = destinyCanvas.toDataURL("image/png").split(",")[1];
+    zip.file("mazo_designios.png", destinyData, { base64: true });
+  }
+
+  const blob = await zip.generateAsync({ type: "blob" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "deck_tts.zip";
+  link.click();
+}        // Función para generar checklist de texto para un deck
+        function generateDeckChecklist(deckType) {
+            const cards = getCurrentDeckCardDetails()
+                .filter(c => getCardDeckType(c.Tipo) === deckType);
+
+            let checklist = "";
+            cards.forEach(card => {
+                checklist += `x${card.count} - ${card.Nombre} (${card.Tipo})\n`;
+            });
+
+            return checklist;
         }
+
+        // Función mejorada para obtener URLs de imágenes de cartas
+        function getCardImageURLsImproved(deckType) {
+            const cards = getCurrentDeckCardDetails()
+                .filter(c => getCardDeckType(c.Tipo) === deckType);
+
+            const urls = [];
+            cards.forEach(card => {
+                // Usar la URL del CSV tal como está, igual que en galeria.html
+                const img = card['URL-IMG'] || 'https://placehold.co/300x420/3b0066/ffffff?text=' + encodeURIComponent(card.Nombre);
+                // Añadir tantas copias como tenga la carta en el mazo
+                for (let i = 0; i < card.count; i++) {
+                    urls.push(img);
+                }
+            });
+
+            return urls;
+        }        // Crea lienzo grande para TTS mejorado con especificaciones exactas
+        async function createDeckCanvasImproved(urls, cols = 10) {
+            if (!urls || urls.length === 0) return null;
+
+            const cardImgs = await Promise.all(urls.map(src => new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => {
+                    console.warn(`Error cargando imagen: ${src}`);
+                    resolve(null);
+                };
+                img.src = src;
+            })));
+
+            const validImgs = cardImgs.filter(img => img !== null);
+
+            if (validImgs.length === 0) return null;
+
+            // Especificaciones exactas para TTS: 250x350 píxeles por carta
+            const cardWidth = 250;
+            const cardHeight = 350;
+            const maxCards = 70; // Máximo 70 cartas
+            const rows = 7; // Exactamente 7 filas
+            
+            // Crear imagen de carta en blanco para rellenar espacios vacíos
+            const blankCardCanvas = document.createElement("canvas");
+            blankCardCanvas.width = cardWidth;
+            blankCardCanvas.height = cardHeight;
+            const blankCtx = blankCardCanvas.getContext("2d");
+            blankCtx.fillStyle = "#2a2a2a";
+            blankCtx.fillRect(0, 0, cardWidth, cardHeight);
+            blankCtx.strokeStyle = "#666";
+            blankCtx.lineWidth = 2;
+            blankCtx.strokeRect(1, 1, cardWidth-2, cardHeight-2);
+            
+            // Preparar array de imágenes con cartas en blanco si es necesario
+            const allImages = [...validImgs];
+            while (allImages.length < maxCards) {
+                allImages.push(blankCardCanvas);
+            }
+            
+            // Limitar a máximo 70 cartas
+            const finalImages = allImages.slice(0, maxCards);
+
+            const canvas = document.createElement("canvas");
+            canvas.width = cols * cardWidth; // 10 columnas * 250px = 2500px
+            canvas.height = rows * cardHeight; // 7 filas * 350px = 2450px
+            const ctx = canvas.getContext("2d");
+
+            finalImages.forEach((img, i) => {
+                const x = (i % cols) * cardWidth;
+                const y = Math.floor(i / cols) * cardHeight;
+                
+                if (img instanceof HTMLCanvasElement) {
+                    // Es una carta en blanco (canvas)
+                    ctx.drawImage(img, x, y);
+                } else {
+                    // Es una imagen de carta normal
+                    ctx.drawImage(img, x, y, cardWidth, cardHeight);
+                }
+            });
+
+            return canvas;
+        }
+
+        // Exporta el mazo como dos decksheets separadas en un ZIP con imágenes traseras y checklist
+        async function exportDeckToTTSImproved() {
+            try {
+                const godURLs = getCardImageURLsImproved("god");
+                const destinyURLs = getCardImageURLsImproved("destiny");
+
+                if (godURLs.length === 0 && destinyURLs.length === 0) {
+                    alert("⚠️ No hay cartas en el mazo para exportar.");
+                    return;
+                }
+
+                console.log(`Exportando ${godURLs.length} cartas de dioses y ${destinyURLs.length} cartas de designios`);
+                
+                // Crear ZIP
+                const zip = new JSZip();
+                
+                // Generar decksheet de dioses si hay cartas
+                if (godURLs.length > 0) {
+                    const godCanvas = await createDeckCanvasImproved(godURLs);
+                    if (godCanvas) {
+                        const godData = godCanvas.toDataURL("image/png").split(",")[1];
+                        zip.file("decksheet_dioses.png", godData, { base64: true });
+                    }
+                }
+                
+                // Generar decksheet de designios si hay cartas
+                if (destinyURLs.length > 0) {
+                    const destinyCanvas = await createDeckCanvasImproved(destinyURLs);
+                    if (destinyCanvas) {
+                        const destinyData = destinyCanvas.toDataURL("image/png").split(",")[1];
+                        zip.file("decksheet_designios.png", destinyData, { base64: true });
+                    }
+                }
+                
+                // Añadir imágenes traseras
+                try {
+                    // Cargar imagen trasera de dioses
+                    const traseraGodResponse = await fetch("GDM/Traseras/TraseraDioses.png");
+                    if (traseraGodResponse.ok) {
+                        const traseraGodBlob = await traseraGodResponse.blob();
+                        zip.file("TraseraDioses.png", traseraGodBlob);
+                    }
+                    
+                    // Cargar imagen trasera de designios
+                    const traseraDestinyResponse = await fetch("GDM/Traseras/TraseraDesignios.png");
+                    if (traseraDestinyResponse.ok) {
+                        const traseraDestinyBlob = await traseraDestinyResponse.blob();
+                        zip.file("TraseraDesignios.png", traseraDestinyBlob);
+                    }
+                } catch (error) {
+                    console.warn("No se pudieron cargar las imágenes traseras:", error);
+                }
+                
+                // Generar checklist del deck completo
+                const deckName = document.getElementById('deck-name').textContent || "Mi Mazo";
+                const checklist = generateCompleteChecklist();
+                zip.file(`${deckName}.txt`, checklist);
+                
+                // Generar y descargar ZIP
+                const blob = await zip.generateAsync({ type: "blob" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = `${deckName}_TTS.zip`;
+                a.click();
+                
+                alert(`✅ Pack TTS generado exitosamente!\n📋 Contenido:\n• Decksheet de dioses (${godURLs.length} cartas)\n• Decksheet de designios (${destinyURLs.length} cartas)\n• Imágenes traseras\n• Checklist: ${deckName}.txt\n• Listo para Tabletop Simulator`);
+
+            } catch (error) {
+                console.error("Error en exportación TTS:", error);
+                alert("❌ Error durante la exportación TTS: " + error.message);
+            }
+        }
+        
+        // Genera checklist completa del deck
+        function generateCompleteChecklist() {
+            const allCards = getCurrentDeckCardDetails();
+            let checklist = "";
+            
+            allCards.forEach(card => {
+                checklist += `x${card.count} - ${card.Nombre} (${card.Tipo})\n`;
+            });
+            
+            return checklist;
+        }
+
+        // Configurar el botón de exportación TTS
+        document.addEventListener('DOMContentLoaded', () => {
+            const exportTTSBtn = document.getElementById('export-tts-btn');
+            if (exportTTSBtn) {
+                exportTTSBtn.addEventListener('click', exportDeckToTTSImproved);
+            }
+        });

@@ -553,7 +553,8 @@ function importDeckFromJSON(event) {
             const previewImg = document.getElementById('card-preview-image');
             const previewDetails = document.getElementById('card-preview-details');
 
-            const imgUrl = card['URL-IMG'] || 'https://placehold.co/300x420/3b0066/ffffff?text=Carta+GDM';
+            // Usar la URL del CSV tal como está
+            const imgUrl = card['URL-IMG'];
             
             previewImg.src = imgUrl;
             previewImg.alt = `Vista previa de ${card.Nombre}`;
@@ -598,9 +599,9 @@ function importDeckFromJSON(event) {
                 container.setAttribute('title', `Clic para añadir ${card.Nombre}`);
 
                 const imgElement = document.createElement('img');
-                imgElement.src = card['URL-IMG'] || 'https://placehold.co/100x150/3b0066/ffffff?text=Carta+GDM';
+                // Usar la URL del CSV tal como está
+                imgElement.src = card['URL-IMG'];
                 imgElement.alt = `Carta ${card.Nombre}`;
-                imgElement.onerror = () => { imgElement.src = 'https://placehold.co/100x150/3b0066/ffffff?text=Imagen+GDM'; };
 
                 container.appendChild(imgElement);
 

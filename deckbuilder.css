@@ -1,11 +1,11 @@
   /* Estilos específicos para la interfaz del Deckbuilder */
-        :root {
-            --primary-purple: #C873C4;
-            --secondary-green: #97E88D;
-            --background-dark: #1e1e1e;
-            --text-color: #fff;
-            --deck-bg: #2a2a2a;
-        }
+:root {
+    --primary-purple: #C873C4;
+    --secondary-green: #97E88D;
+    --background-dark: #1e1e1e;
+    --text-color: #fff;
+    --deck-bg: #2a2a2a;
+}
 /* ==== Parche para restaurar position: sticky dentro del layout flex ==== */
 
 /* Restablecimientos mínimos que GaleriaCSS aporta habitualmente */
@@ -339,9 +339,7 @@ html, body, main { overflow: visible !important; }
                 max-width: none;
                 flex: 2;
             }
-        }
-        
-        @media (max-width: 1024px) {
+        }        @media (max-width: 1024px) {
             .deckbuilder-container {
                 flex-direction: column;
             }
@@ -351,19 +349,37 @@ html, body, main { overflow: visible !important; }
                 max-width: none;
             }
         }
+        
+        /* Media Query para logo responsive */
+        @media (max-width: 900px) {
+            .logo-main {
+                width: 90%;
+                max-width: 300px;
+                height: auto;
+            }
+            
+            .logo-area {
+                padding: 10px 0;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .logo-main {
+                width: 80%;
+                max-width: 250px;
+            }
+        }
     
     .deck-actions {
         display: flex;
         gap: 10px;
         flex-wrap: wrap;
         margin-bottom: 10px;
-    }
-
-   .btn-auth {
+    }   .btn-auth {
     padding: 8px 15px;
     margin-left: 10px;
     border-radius: 5px;
-    color: #000000;
+    color: #ffffff;
     text-decoration: none;
     background-color: var(--secondary-green);
 }

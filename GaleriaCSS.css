@@ -304,4 +304,62 @@ body {
     .modal-image-container {
         width: 100%;
     }
+    
+    /* Logo responsive para móviles */
+    .logo-main {
+        width: 90%;
+        max-width: 300px;
+        height: auto;
+    }
+    
+    .logo-area {
+        padding: 10px 0;
+    }
+}
+
+/* =======================================
+   PLACEHOLDER STYLES
+   ======================================= */
+.card-name-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(59, 0, 102, 0.9);
+    color: white;
+    padding: 8px 5px;
+    font-size: 11px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 0 0 8px 8px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    transition: opacity 0.3s ease;
+}
+
+/* Estilos para imágenes placeholder */
+img[data-is-placeholder="true"] {
+    filter: grayscale(20%) brightness(0.8);
+    border: 2px solid rgba(200, 115, 196, 0.3);
+}
+
+/* Media Query adicional para dispositivos muy pequeños */
+@media (max-width: 480px) {
+    .logo-main {
+        width: 80%;
+        max-width: 250px;
+    }
+    
+    .header-top-bar {
+        padding: 10px 20px;
+    }
+    
+    .btn-auth {
+        padding: 6px 12px;
+        font-size: 0.9em;
+    }
+    
+    .card-name-overlay {
+        font-size: 10px;
+        padding: 6px 4px;
+    }
 }
