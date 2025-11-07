@@ -81,7 +81,7 @@ function importDeckFromJSON(event) {
         // Restricciones del juego
         const MIN_GOD_DECK = 20;
         const MIN_DESTINY_DECK = 30;
-        const MAX_COPIES = 3; // Máximo 3 copias de una carta, si no es única.
+        const MAX_COPIES = 2; // Máximo 3 copias de una carta, si no es única.
 
         // Mapeo de Tipos de Carta a su Mazo (NUEVA LÓGICA)
         const GOD_DECK_TYPES = ['Panteón', 'Personaje', 'Recurso', 'Evento'];
