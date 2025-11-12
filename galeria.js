@@ -107,10 +107,6 @@ function correctImagePath(originalPath, cardName, mythology, cardId) {
     // Limpiar espacios extra en la ruta original
     let correctedPath = originalPath.trim();
     
-    // Caso especial para mitología Japonesa y Nórdica - usar placeholder ya que los archivos reales son .jpg numerados
-    if (mythology && (mythology.toLowerCase().includes('japonesa') || mythology.toLowerCase().includes('nórdica'))) {
-        return 'Logo.png'; // Usar placeholder por defecto
-    }
     
     // Para todas las demás mitologías, usar las rutas originales del CSV
     correctedPath = correctedPath.replace(/\s+\.png$/, '.png');

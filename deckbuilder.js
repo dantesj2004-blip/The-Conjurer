@@ -241,10 +241,6 @@ function importDeckFromJSON(event) {
             // Limpiar espacios extra en la ruta original
             let correctedPath = originalPath.trim();
             
-            // Caso especial para mitología Japonesa y Nórdica - usar placeholder ya que los archivos reales son .jpg numerados
-            if (mythology && (mythology.toLowerCase().includes('japonesa') || mythology.toLowerCase().includes('nórdica'))) {
-                return 'https://placehold.co/300x420/3b0066/ffffff?text=' + encodeURIComponent(cardName);
-            }
             
             // Para otras mitologías, intentar corregir espacios antes de la extensión
             correctedPath = correctedPath.replace(/\s+\.png$/, '.png');
