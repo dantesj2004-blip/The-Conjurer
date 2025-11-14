@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cierra la modal al hacer clic fuera del contenido
     document.getElementById('card-modal').addEventListener('click', (e) => {
         if (e.target.id === 'card-modal') {
-            closeModal();
+            closeModal(); //Cierra el modal
         }
     });
 });
