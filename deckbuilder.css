@@ -109,6 +109,11 @@ html, body, main { overflow: visible !important; }
         .deck-list {
             flex: 1; /* Ocupa el espacio restante */
             max-width: 400px;
+            /* Hacer que la checklist del mazo siga con el scroll */
+            position: sticky;
+            top: 20px;
+            z-index: 9;
+            align-self: flex-start;
         }
 
         .filters-container {
@@ -375,11 +380,17 @@ html, body, main { overflow: visible !important; }
         gap: 10px;
         flex-wrap: wrap;
         margin-bottom: 10px;
-    }   .btn-auth {
+    }    .btn-auth {
     padding: 8px 15px;
     margin-left: 10px;
     border-radius: 5px;
-    color: #ffffff;
+    color: #000000; /* Cambiar texto a negro para botones verdes */
     text-decoration: none;
     background-color: var(--secondary-green);
+}
+
+/* Mantener texto blanco para botones de registro y entrada */
+.btn-auth.btn-register,
+.btn-auth.btn-login {
+    color: #ffffff;
 }

@@ -4,7 +4,7 @@ let allCardsData = []; // Variable global para guardar los datos
 document.addEventListener('DOMContentLoaded', () => {
     loadCSV();
 
-    // Cierra la modal al pulsar la tecla ESC
+    // Cierra la modal al pulsar la tecla ESCa
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeModal();
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cierra la modal al hacer clic fuera del contenido
     document.getElementById('card-modal').addEventListener('click', (e) => {
         if (e.target.id === 'card-modal') {
-            closeModal(); //Cierra el modal
+            closeModal();
         }
     });
 });

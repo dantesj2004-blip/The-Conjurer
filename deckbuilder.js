@@ -1,47 +1,49 @@
  // Variables globales
         let allCardsData = []; // Todas las cartas cargadas del CSV
-        let deckCards = {};     // { cardId: count } - Cartas actualmente en el mazo
+        let mazoCards = {};     // { cardId: count } - Cartas actualmente en el mazo
         let currentPantheon = null; // Mitología del Panteón seleccionado
         const CSV_FILE_PATH = "GDM-CARTAS - Hoja 1 (4).csv"; 
 
-        // === EXPORTAR / IMPORTAR DECK ===
+        // === EXPORTAR / IMPORTAR MAZO ===
 
 
-function exportDeckToJSON() {
-    const cardsInDeck = getCurrentDeckCardDetails();
-    let godDeckTotal = 0;
-    let destinyDeckTotal = 0;
+function exportMazoToJSON() {
+    const cardsInMazo = getCurrentMazoCardDetails();
+    let godMazoTotal = 0;
+    let destinyMazoTotal = 0;
     let pantheonCount = 0;
 
-    cardsInDeck.forEach(card => {
-        const deckType = getCardDeckType(card.Tipo);
-        if (deckType === 'god') godDeckTotal += card.count;
-        else if (deckType === 'destiny') destinyDeckTotal += card.count;
+    cardsInMazo.forEach(card => {
+        const mazoType = getCardMazoType(card.Tipo);
+        if (mazoType === 'god') godMazoTotal += card.count;
+        else if (mazoType === 'destiny') destinyMazoTotal += card.count;
         if (card.Tipo === 'Panteón') pantheonCount += card.count;
     });
 
-    const meetsRequirements = (godDeckTotal >= MIN_GOD_DECK) && (destinyDeckTotal >= MIN_DESTINY_DECK) && (pantheonCount === 1);
+    const meetsRequirements = (godMazoTotal >= MIN_GOD_MAZO) && (destinyMazoTotal >= MIN_DESTINY_MAZO) && (pantheonCount === 1);
     if (!meetsRequirements) {
-        alert("⚠️ No se puede generar el archivo. Revisa los requisitos mínimos del deck.");
+        alert("⚠️ No se puede generar el archivo. Revisa los requisitos mínimos del mazo.");
         return;
     }
 
-    const deckData = { 
-        deckName: document.getElementById('deck-name').textContent || "Mi Mazo", // Incluir el nombre del mazo
-        deckCards, 
+    const mazoData = { 
+        mazoName: document.getElementById('deck-name').textContent || "Mi Mazo", // Incluir el nombre del mazo
+        mazoCards, 
         currentPantheon 
     };
-    const blob = new Blob([JSON.stringify(deckData, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(mazoData, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "deck_gdm.json";
+    // Usar el nombre del mazo para el archivo, limpiando caracteres especiales
+    const mazoName = (document.getElementById('deck-name').textContent || "Mi Mazo").replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
+    a.download = `${mazoName}_gdm.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
-function importDeckFromJSON(event) {
+function importMazoFromJSON(event) {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -49,23 +51,24 @@ function importDeckFromJSON(event) {
     reader.onload = (e) => {
         try {
             const data = JSON.parse(e.target.result);
-            if (!data.deckCards) {
-                alert("El archivo no contiene un deck válido.");
+            // Compatibilidad con archivos antiguos que usan "deckCards" y nuevos que usan "mazoCards"
+            if (!data.mazoCards && !data.deckCards) {
+                alert("El archivo no contiene un mazo válido.");
                 return;
             }
-            deckCards = data.deckCards;
+            mazoCards = data.mazoCards || data.deckCards;
             currentPantheon = data.currentPantheon || null;
             
-            // Importar nombre del mazo
-            if(data.deckName) {
-                const deckNameEl = document.getElementById('deck-name');
-                deckNameEl.textContent = data.deckName;
-                localStorage.setItem('gdmDeckName', data.deckName); // Guardar en local
+            // Importar nombre del mazo (compatibilidad con nombres antiguos)
+            if(data.mazoName || data.deckName) {
+                const mazoNameEl = document.getElementById('deck-name');
+                mazoNameEl.textContent = data.mazoName || data.deckName;
+                localStorage.setItem('gdmDeckName', data.mazoName || data.deckName); // Guardar en local
             }
 
-            renderDeckList();
+            renderMazoList();
             renderPantheonInfo();
-            alert("Deck importado correctamente ✅");
+            alert("Mazo importado correctamente ✅");
         } catch (err) {
             alert("Error al leer el archivo: " + err.message);
         }
@@ -79,17 +82,17 @@ function importDeckFromJSON(event) {
 */
 
         // Restricciones del juego
-        const MIN_GOD_DECK = 20;
-        const MIN_DESTINY_DECK = 30;
+        const MIN_GOD_MAZO = 20;
+        const MIN_DESTINY_MAZO = 30;
         const MAX_COPIES = 2; // Máximo 3 copias de una carta, si no es única.
 
         // Mapeo de Tipos de Carta a su Mazo (NUEVA LÓGICA)
-        const GOD_DECK_TYPES = ['Panteón', 'Personaje', 'Recurso', 'Evento'];
-        const DESTINY_DECK_TYPES = ['Acción', 'Invocación', 'Equipo'];
+        const GOD_MAZO_TYPES = ['Panteón', 'Personaje', 'Recurso', 'Evento'];
+        const DESTINY_MAZO_TYPES = ['Acción', 'Invocación', 'Equipo'];
         
-        function getCardDeckType(type) {
-            if (GOD_DECK_TYPES.includes(type)) return 'god';
-            if (DESTINY_DECK_TYPES.includes(type)) return 'destiny';
+        function getCardMazoType(type) {
+            if (GOD_MAZO_TYPES.includes(type)) return 'god';
+            if (DESTINY_MAZO_TYPES.includes(type)) return 'destiny';
             return 'unknown';
         }
 
@@ -99,7 +102,7 @@ function importDeckFromJSON(event) {
             document.getElementById('search-bar').addEventListener('input', applyFilters);
 
             // --- NUEVO: Cargar y Guardar Nombre del Mazo ---
-            setupDeckNameEditor();
+            setupMazoNameEditor();
         });
 
         // --- FUNCIONES DE CARGA Y PARSEO ---
@@ -323,7 +326,7 @@ function importDeckFromJSON(event) {
             }
 
             filteredCards.forEach(card => {
-                const count = deckCards[card.ID] || 0;
+                const count = mazoCards[card.ID] || 0;
                 const container = document.createElement('div');
                 container.classList.add('card-gallery-item');
                 container.setAttribute('data-id', card.ID);
@@ -352,7 +355,14 @@ function importDeckFromJSON(event) {
                 // Listener para PREVISUALIZAR la carta
                 container.addEventListener('click', () => {
                     displayCardPreview(card); // Muestra la carta grande
-                    addCardToDeck(card.ID);   // Añade la carta al mazo
+                    addCardToMazo(card.ID);   // Añade la carta al mazo
+                });
+                
+                // Listener para QUITAR carta con click derecho
+                container.addEventListener('contextmenu', (e) => {
+                    e.preventDefault(); // Prevenir el menú contextual por defecto
+                    displayCardPreview(card); // Muestra la carta grande
+                    removeCardFromMazo(card.ID); // Quita la carta del mazo
                 });
                 
                 // Opcional: listener solo para previsualizar al pasar el ratón
@@ -369,40 +379,43 @@ function importDeckFromJSON(event) {
             renderGallery(filterTerm, filterType, filterMythology);
         }
         
-        function renderDeckList() {
-            const godDeckDiv = document.getElementById('god-deck-cards');
-            const destinyDeckDiv = document.getElementById('destiny-deck-cards');
+        function renderMazoList() {
+            const godMazoDiv = document.getElementById('god-deck-cards');
+            const destinyMazoDiv = document.getElementById('destiny-deck-cards');
             const godCountSpan = document.getElementById('god-deck-count');
             const destinyCountSpan = document.getElementById('destiny-deck-count');
 
-            godDeckDiv.innerHTML = '';
-            destinyDeckDiv.innerHTML = '';
+            godMazoDiv.innerHTML = '';
+            destinyMazoDiv.innerHTML = '';
 
             let godTotal = 0;
             let destinyTotal = 0;
 
-            const cardsInDeck = getCurrentDeckCardDetails();
+            const cardsInMazo = getCurrentMazoCardDetails();
             
             // Separar y ordenar las cartas
-            const godCards = cardsInDeck.filter(c => getCardDeckType(c.Tipo) === 'god').sort((a, b) => a.Tipo.localeCompare(b.Tipo) || a.Nombre.localeCompare(b.Nombre));
-            const destinyCards = cardsInDeck.filter(c => getCardDeckType(c.Tipo) === 'destiny').sort((a, b) => a.Nombre.localeCompare(b.Nombre));
+            const godCards = cardsInMazo.filter(c => getCardMazoType(c.Tipo) === 'god').sort((a, b) => a.Tipo.localeCompare(b.Tipo) || a.Nombre.localeCompare(b.Nombre));
+            const destinyCards = cardsInMazo.filter(c => getCardMazoType(c.Tipo) === 'destiny').sort((a, b) => a.Nombre.localeCompare(b.Nombre));
 
             // RENDER MAZO DE DIOSES
             if (godCards.length === 0) {
-                godDeckDiv.innerHTML = '<p class="placeholder">Añade Panteón, Personajes, Recursos, Eventos aquí.</p>';
+                godMazoDiv.innerHTML = '<p class="placeholder">Añade Panteón, Personajes, Recursos, Eventos aquí.</p>';
             } else {
                 godCards.forEach(card => {
-                    godDeckDiv.appendChild(createDeckItem(card));
-                    godTotal += card.count;
+                    godMazoDiv.appendChild(createMazoItem(card));
+                    // Excluir el Panteón del conteo total del mazo de dioses
+                    if (card.Tipo !== 'Panteón') {
+                        godTotal += card.count;
+                    }
                 });
             }
 
             // RENDER MAZO DE DESIGNIOS
             if (destinyCards.length === 0) {
-                destinyDeckDiv.innerHTML = '<p class="placeholder">Añade Cartas de Acción, Invocación, Equipo aquí.</p>';
+                destinyMazoDiv.innerHTML = '<p class="placeholder">Añade Cartas de Acción, Invocación, Equipo aquí.</p>';
             } else {
                 destinyCards.forEach(card => {
-                    destinyDeckDiv.appendChild(createDeckItem(card));
+                    destinyMazoDiv.appendChild(createMazoItem(card));
                     destinyTotal += card.count;
                 });
             }
@@ -414,19 +427,19 @@ function importDeckFromJSON(event) {
             // Re-renderizar la galería para actualizar los contadores
             applyFilters(); 
             // Validar reglas después de la renderización
-            validateDeck();
+            validateMazo();
         }
 
-        function createDeckItem(card) {
+        function createMazoItem(card) {
             const div = document.createElement('div');
             div.classList.add('deck-card-item');
             
-            const deckType = getCardDeckType(card.Tipo);
-            const isGodDeck = GOD_DECK_TYPES.includes(card.Tipo) || card.Tipo === 'Panteón';
-            const isDestinyDeck = DESTINY_DECK_TYPES.includes(card.Tipo);
+            const mazoType = getCardMazoType(card.Tipo);
+            const isGodMazo = GOD_MAZO_TYPES.includes(card.Tipo) || card.Tipo === 'Panteón';
+            const isDestinyMazo = DESTINY_MAZO_TYPES.includes(card.Tipo);
             
             let typeIndicator = '';
-            if ((deckType === 'god' && !isGodDeck) || (deckType === 'destiny' && !isDestinyDeck)) {
+            if ((mazoType === 'god' && !isGodMazo) || (mazoType === 'destiny' && !isDestinyMazo)) {
                 typeIndicator = '<span class="type-error"> [TIPO INVÁLIDO]</span>';
             }
 
@@ -444,7 +457,7 @@ function importDeckFromJSON(event) {
             
             const minusButton = document.createElement('button');
             minusButton.textContent = '-';
-            minusButton.onclick = () => removeCardFromDeck(card.ID);
+            minusButton.onclick = () => removeCardFromMazo(card.ID);
             
             const countSpan = document.createElement('span');
             countSpan.textContent = card.count;
@@ -455,7 +468,7 @@ function importDeckFromJSON(event) {
             plusButton.textContent = '+';
             plusButton.onclick = () => {
                 displayCardPreview(card); // Muestra la carta grande al añadir desde la lista
-                addCardToDeck(card.ID);
+                addCardToMazo(card.ID);
             };
 
             controlsDiv.appendChild(minusButton);
@@ -473,11 +486,11 @@ function importDeckFromJSON(event) {
             return allCardsData.find(c => c.ID === cardId);
         }
         
-        function getCurrentDeckCardDetails() {
-            return Object.keys(deckCards)
+        function getCurrentMazoCardDetails() {
+            return Object.keys(mazoCards)
                 .map(id => {
                     const card = getCardById(id);
-                    return card ? { ...card, count: deckCards[id] } : null;
+                    return card ? { ...card, count: mazoCards[id] } : null;
                 })
                 .filter(c => c !== null);
         }
@@ -486,24 +499,24 @@ function importDeckFromJSON(event) {
             return card.Claves.includes('ÚNICO') || card.Claves.includes('UNICO');
         }
 
-        function addCardToDeck(cardId) {
+        function addCardToMazo(cardId) {
             const card = getCardById(cardId);
             if (!card) return;
 
-            const currentCount = deckCards[cardId] || 0;
+            const currentCount = mazoCards[cardId] || 0;
             const isUnique = isCardUnique(card);
             const isPantheon = card.Tipo === 'Panteón';
-            const cardDeckType = getCardDeckType(card.Tipo);
+            const cardMazoType = getCardMazoType(card.Tipo);
 
             // 0. RESTRICCIÓN DE TIPO DE CARTA (Control de qué tipo va a cada mazo)
-            if (cardDeckType === 'unknown') {
+            if (cardMazoType === 'unknown') {
                 console.warn(`Error: El tipo de carta "${card.Tipo}" no está reconocido para ningún mazo.`);
                 return;
             }
 
             // 1. RESTRICCIÓN DE PANTEÓN (solo se puede tener uno)
             if (isPantheon) {
-                const existingPantheon = getCurrentDeckCardDetails().find(c => c.Tipo === 'Panteón');
+                const existingPantheon = getCurrentMazoCardDetails().find(c => c.Tipo === 'Panteón');
                 
                 if (currentCount === 1) {
                     console.warn('Ya tienes esta carta de Panteón en tu mazo. No puedes añadir más.');
@@ -517,7 +530,7 @@ function importDeckFromJSON(event) {
                 }
                 
                 // Si llegamos aquí, se puede añadir el panteón (la primera y única copia)
-                deckCards[cardId] = 1;
+                mazoCards[cardId] = 1;
                 currentPantheon = card.Mitologia;
                 
             } else {
@@ -534,24 +547,24 @@ function importDeckFromJSON(event) {
                 }
 
                 // Si todas las validaciones pasan, se añade la carta
-                deckCards[cardId] = currentCount + 1;
+                mazoCards[cardId] = currentCount + 1;
             }
 
-            renderDeckList();
+            renderMazoList();
             renderPantheonInfo();
         }
 
-        function removeCardFromDeck(cardId) {
+        function removeCardFromMazo(cardId) {
             const card = getCardById(cardId);
             if (!card) return;
 
-            const currentCount = deckCards[cardId] || 0;
+            const currentCount = mazoCards[cardId] || 0;
             
             if (currentCount > 0) {
-                deckCards[cardId] = currentCount - 1;
+                mazoCards[cardId] = currentCount - 1;
                 
-                if (deckCards[cardId] === 0) {
-                    delete deckCards[cardId];
+                if (mazoCards[cardId] === 0) {
+                    delete mazoCards[cardId];
                     // Si eliminamos la carta de Panteón, reseteamos la Mitología
                     if (card.Tipo === 'Panteón') {
                         currentPantheon = null;
@@ -559,7 +572,7 @@ function importDeckFromJSON(event) {
                 }
             }
             
-            renderDeckList();
+            renderMazoList();
             renderPantheonInfo();
         }
 
@@ -572,7 +585,7 @@ function importDeckFromJSON(event) {
             // Actualizar mensaje de Panteón
             const pantheonMsgEl = document.getElementById('pantheon-limit-msg');
             pantheonMsgEl.classList.remove('validation-error', 'validation-ok');
-            const existingPantheonCard = getCurrentDeckCardDetails().find(c => c.Tipo === 'Panteón');
+            const existingPantheonCard = getCurrentMazoCardDetails().find(c => c.Tipo === 'Panteón');
             
             if (currentPantheon && existingPantheonCard) {
                 pantheonMsgEl.classList.add('validation-ok');
@@ -584,26 +597,26 @@ function importDeckFromJSON(event) {
 
         }
 
-        function validateDeck() {
-            const cardsInDeck = getCurrentDeckCardDetails();
-            let godDeckTotal = 0;
-            let destinyDeckTotal = 0;
+        function validateMazo() {
+            const cardsInMazo = getCurrentMazoCardDetails();
+            let godMazoTotal = 0;
+            let destinyMazoTotal = 0;
             let panteonCount = 0;
             let isUniqueValid = true;
             let isTypeValid = true; 
 
-            cardsInDeck.forEach(card => {
-                const deckType = getCardDeckType(card.Tipo);
+            cardsInMazo.forEach(card => {
+                const mazoType = getCardMazoType(card.Tipo);
                 
                 // Validar si el tipo de carta está correctamente clasificado
-                if (deckType === 'unknown') {
+                if (mazoType === 'unknown') {
                     isTypeValid = false;
                 }
 
-                if (deckType === 'god') {
-                    godDeckTotal += card.count;
-                } else if (deckType === 'destiny') {
-                    destinyDeckTotal += card.count;
+                if (mazoType === 'god') {
+                    godMazoTotal += card.count;
+                } else if (mazoType === 'destiny') {
+                    destinyMazoTotal += card.count;
                 }
                 
                 if (card.Tipo === 'Panteón') {
@@ -621,12 +634,12 @@ function importDeckFromJSON(event) {
             updateValidationItem('valid-pantheon', validPantheon, `Panteón Seleccionado: ${validPantheon ? 'OK' : 'Falta 1'}`);
 
             // Validar Tamaño Mazo de Dioses
-            const validGodSize = godDeckTotal >= MIN_GOD_DECK;
-            updateValidationItem('valid-god-size', validGodSize, `Mazo de Dioses: ${godDeckTotal}/${MIN_GOD_DECK}+`);
+            const validGodSize = godMazoTotal >= MIN_GOD_MAZO;
+            updateValidationItem('valid-god-size', validGodSize, `Mazo de Dioses: ${godMazoTotal}/${MIN_GOD_MAZO}+`);
             
             // Validar Tamaño Mazo de Designios
-            const validDestinySize = destinyDeckTotal >= MIN_DESTINY_DECK;
-            updateValidationItem('valid-destiny-size', validDestinySize, `Mazo de Designios: ${destinyDeckTotal}/${MIN_DESTINY_DECK}+`);
+            const validDestinySize = destinyMazoTotal >= MIN_DESTINY_MAZO;
+            updateValidationItem('valid-destiny-size', validDestinySize, `Mazo de Designios: ${destinyMazoTotal}/${MIN_DESTINY_MAZO}+`);
 
             // Validar Cartas Únicas (Máximo 1 copia)
             updateValidationItem('valid-unique-cards', isUniqueValid, `Cartas Únicas (Máx. 1): ${isUniqueValid ? 'OK' : 'ERROR'}`);
@@ -649,39 +662,39 @@ function importDeckFromJSON(event) {
         }
         
         // --- NUEVO: Lógica para el nombre del Mazo ---
-        function setupDeckNameEditor() {
-            const deckNameEl = document.getElementById('deck-name');
-            if (!deckNameEl) return;
+        function setupMazoNameEditor() {
+            const mazoNameEl = document.getElementById('deck-name');
+            if (!mazoNameEl) return;
 
             // 1. Cargar nombre guardado de localStorage
             const savedName = localStorage.getItem('gdmDeckName');
             if (savedName) {
-                deckNameEl.textContent = savedName;
+                mazoNameEl.textContent = savedName;
             }
 
             // 2. Guardar nombre al dejar de editar (blur)
-            deckNameEl.addEventListener('blur', () => {
-                const newName = deckNameEl.textContent.trim();
+            mazoNameEl.addEventListener('blur', () => {
+                const newName = mazoNameEl.textContent.trim();
                 if (newName) {
                     localStorage.setItem('gdmDeckName', newName);
                 } else {
-                    deckNameEl.textContent = "Tu Mazo"; // Evitar que quede vacío
+                    mazoNameEl.textContent = "Tu Mazo"; // Evitar que quede vacío
                     localStorage.setItem('gdmDeckName', "Tu Mazo");
                 }
             });
 
             // 3. Limpiar pegado (paste) para evitar HTML
-            deckNameEl.addEventListener('paste', (e) => {
+            mazoNameEl.addEventListener('paste', (e) => {
                 e.preventDefault();
                 const text = (e.clipboardData || window.clipboardData).getData('text/plain');
                 document.execCommand('insertText', false, text);
             });
 
             // 4. Prevenir salto de línea con 'Enter' y terminar edición
-            deckNameEl.addEventListener('keydown', (e) => {
+            mazoNameEl.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    deckNameEl.blur(); // Termina la edición
+                    mazoNameEl.blur(); // Termina la edición
                 }
             });
         }
@@ -717,13 +730,13 @@ function importDeckFromJSON(event) {
   }
 })();
 
-function getCardImageURLs(deckType) {
+function getCardImageURLs(mazoType) {
   const allCards = window.cardsImported || [];
-  const deckContainer = document.getElementById(
-    deckType === "god" ? "god-deck-cards" : "destiny-deck-cards"
+  const mazoContainer = document.getElementById(
+    mazoType === "god" ? "god-deck-cards" : "destiny-deck-cards"
   );
 
-  const cardNames = [...deckContainer.querySelectorAll(".card-name-btn")].map(btn => {
+  const cardNames = [...mazoContainer.querySelectorAll(".card-name-btn")].map(btn => {
     const fullText = btn.textContent.trim();
     return fullText.split("(")[0].trim();
   });
@@ -739,7 +752,7 @@ function getCardImageURLs(deckType) {
 }
 
 
-async function createDeckCanvas(urls, cols = 10, cardWidth = 300, cardHeight = 420) {
+async function createMazoCanvas(urls, cols = 10, cardWidth = 300, cardHeight = 420) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   const rows = Math.ceil(urls.length / cols);
@@ -766,7 +779,7 @@ async function createDeckCanvas(urls, cols = 10, cardWidth = 300, cardHeight = 4
   return canvas;
 }
 
-async function exportDeckToTTS() {
+async function exportMazoToTTS() {
   const allCards = window.cardsImported || [];
 
   if (!Array.isArray(allCards) || allCards.length === 0) {
@@ -785,13 +798,13 @@ async function exportDeckToTTS() {
   const zip = new JSZip();
 
   if (godURLs.length > 0) {
-    const godCanvas = await createDeckCanvas(godURLs);
+    const godCanvas = await createMazoCanvas(godURLs);
     const godData = godCanvas.toDataURL("image/png").split(",")[1];
     zip.file("mazo_dioses.png", godData, { base64: true });
   }
 
   if (destinyURLs.length > 0) {
-    const destinyCanvas = await createDeckCanvas(destinyURLs);
+    const destinyCanvas = await createMazoCanvas(destinyURLs);
     const destinyData = destinyCanvas.toDataURL("image/png").split(",")[1];
     zip.file("mazo_designios.png", destinyData, { base64: true });
   }
@@ -799,12 +812,13 @@ async function exportDeckToTTS() {
   const blob = await zip.generateAsync({ type: "blob" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = "deck_tts.zip";
+  const mazoName = (document.getElementById('deck-name').textContent || "Mi Mazo").replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
+  link.download = `${mazoName}_tts.zip`;
   link.click();
-}        // Función para generar checklist de texto para un deck
-        function generateDeckChecklist(deckType) {
-            const cards = getCurrentDeckCardDetails()
-                .filter(c => getCardDeckType(c.Tipo) === deckType);
+}        // Función para generar checklist de texto para un mazo
+        function generateMazoChecklist(mazoType) {
+            const cards = getCurrentMazoCardDetails()
+                .filter(c => getCardMazoType(c.Tipo) === mazoType);
 
             let checklist = "";
             cards.forEach(card => {
@@ -815,9 +829,9 @@ async function exportDeckToTTS() {
         }
 
         // Función mejorada para obtener URLs de imágenes de cartas
-        function getCardImageURLsImproved(deckType) {
-            const cards = getCurrentDeckCardDetails()
-                .filter(c => getCardDeckType(c.Tipo) === deckType);
+        function getCardImageURLsImproved(mazoType) {
+            const cards = getCurrentMazoCardDetails()
+                .filter(c => getCardMazoType(c.Tipo) === mazoType);
 
             const urls = [];
             cards.forEach(card => {
@@ -831,7 +845,7 @@ async function exportDeckToTTS() {
 
             return urls;
         }        // Crea lienzo grande para TTS mejorado con especificaciones exactas
-        async function createDeckCanvasImproved(urls, cols = 10) {
+        async function createMazoCanvasImproved(urls, cols = 10) {
             if (!urls || urls.length === 0) return null;
 
             const cardImgs = await Promise.all(urls.map(src => new Promise(resolve => {
@@ -896,7 +910,7 @@ async function exportDeckToTTS() {
         }
 
         // Exporta el mazo como dos decksheets separadas en un ZIP con imágenes traseras y checklist
-        async function exportDeckToTTSImproved() {
+        async function exportMazoToTTSImproved() {
             try {
                 const godURLs = getCardImageURLsImproved("god");
                 const destinyURLs = getCardImageURLsImproved("destiny");
@@ -913,7 +927,7 @@ async function exportDeckToTTS() {
                 
                 // Generar decksheet de dioses si hay cartas
                 if (godURLs.length > 0) {
-                    const godCanvas = await createDeckCanvasImproved(godURLs);
+                    const godCanvas = await createMazoCanvasImproved(godURLs);
                     if (godCanvas) {
                         const godData = godCanvas.toDataURL("image/png").split(",")[1];
                         zip.file("decksheet_dioses.png", godData, { base64: true });
@@ -922,7 +936,7 @@ async function exportDeckToTTS() {
                 
                 // Generar decksheet de designios si hay cartas
                 if (destinyURLs.length > 0) {
-                    const destinyCanvas = await createDeckCanvasImproved(destinyURLs);
+                    const destinyCanvas = await createMazoCanvasImproved(destinyURLs);
                     if (destinyCanvas) {
                         const destinyData = destinyCanvas.toDataURL("image/png").split(",")[1];
                         zip.file("decksheet_designios.png", destinyData, { base64: true });
@@ -948,19 +962,20 @@ async function exportDeckToTTS() {
                     console.warn("No se pudieron cargar las imágenes traseras:", error);
                 }
                 
-                // Generar checklist del deck completo
-                const deckName = document.getElementById('deck-name').textContent || "Mi Mazo";
+                // Generar checklist del mazo completo
+                const mazoName = document.getElementById('deck-name').textContent || "Mi Mazo";
                 const checklist = generateCompleteChecklist();
-                zip.file(`${deckName}.txt`, checklist);
+                zip.file(`${mazoName}.txt`, checklist);
                 
                 // Generar y descargar ZIP
                 const blob = await zip.generateAsync({ type: "blob" });
                 const a = document.createElement("a");
                 a.href = URL.createObjectURL(blob);
-                a.download = `${deckName}_TTS.zip`;
+                const cleanMazoName = mazoName.replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
+                a.download = `${cleanMazoName}_TTS.zip`;
                 a.click();
                 
-                alert(`✅ Pack TTS generado exitosamente!\n📋 Contenido:\n• Decksheet de dioses (${godURLs.length} cartas)\n• Decksheet de designios (${destinyURLs.length} cartas)\n• Imágenes traseras\n• Checklist: ${deckName}.txt\n• Listo para Tabletop Simulator`);
+                alert(`✅ Pack TTS generado exitosamente!\n📋 Contenido:\n• Decksheet de dioses (${godURLs.length} cartas)\n• Decksheet de designios (${destinyURLs.length} cartas)\n• Imágenes traseras\n• Checklist: ${mazoName}.txt\n• Listo para Tabletop Simulator`);
 
             } catch (error) {
                 console.error("Error en exportación TTS:", error);
@@ -970,7 +985,7 @@ async function exportDeckToTTS() {
         
         // Genera checklist completa del deck
         function generateCompleteChecklist() {
-            const allCards = getCurrentDeckCardDetails();
+            const allCards = getCurrentMazoCardDetails();
             let checklist = "";
             
             allCards.forEach(card => {
@@ -984,6 +999,6 @@ async function exportDeckToTTS() {
         document.addEventListener('DOMContentLoaded', () => {
             const exportTTSBtn = document.getElementById('export-tts-btn');
             if (exportTTSBtn) {
-                exportTTSBtn.addEventListener('click', exportDeckToTTSImproved);
+                exportTTSBtn.addEventListener('click', exportMazoToTTSImproved);
             }
         });

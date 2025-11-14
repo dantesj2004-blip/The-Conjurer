@@ -12,7 +12,7 @@
 <script src="https://unpkg.com/phosphor-icons"></script>
 <style>
       
-    </style>
+    </style> 
 </head>
 <body>
 <header class="main-header">
@@ -74,9 +74,9 @@
 
 <div class="deck-actions">
 <button class="btn-auth" id="export-tts-btn" title="Genera una decksheet de 10x7 (2500x2450px) optimizada para TTS">Exportar TTS Decksheet</button>
-<button class="btn-auth" onclick="exportDeckToJSON()">Exportar Deck</button>
-<input accept=".json" id="importDeckFile" onchange="importDeckFromJSON(event)" style="display:none" type="file"/>
-<button class="btn-auth" onclick="document.getElementById('importDeckFile').click()">Importar Deck</button>
+<button class="btn-auth" onclick="exportMazoToJSON()">Exportar Mazo</button>
+<input accept=".json" id="importMazoFile" onchange="importMazoFromJSON(event)" style="display:none" type="file"/>
+<button class="btn-auth" onclick="document.getElementById('importMazoFile').click()">Importar Mazo</button>
 </div>
 <div class="deck-section" id="god-deck">
 <h3>Mazo de Dioses (<span id="god-deck-count">0</span>/20+)</h3>
