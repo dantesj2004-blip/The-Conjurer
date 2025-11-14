@@ -109,8 +109,6 @@ html, body, main { overflow: visible !important; }
         .deck-list {
             flex: 1; /* Ocupa el espacio restante */
             max-width: 400px;
-            /* Hacer que la checklist del mazo siga con el scroll */
-            position: sticky;
             top: 20px;
             z-index: 9;
             align-self: flex-start;
