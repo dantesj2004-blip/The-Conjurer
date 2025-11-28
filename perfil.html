@@ -8,6 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="GaleriaCSS.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
     <style>
         /* Estilos adicionales para perfil */
         .profile-container {
@@ -396,7 +399,6 @@
     </header>
 
     <div class="profile-container">
-        <!-- ENCABEZADO DE PERFIL -->
         <div class="profile-header">
             <div class="user-profile-info">
                 <h2 id="userName">Usuario</h2>
@@ -408,13 +410,11 @@
 
         <div id="errorMessage" class="message error"></div>
 
-        <!-- SECCIÓN DE MAZOS -->
         <div class="mazos-section">
             <h3 class="section-title">📚 Mis Mazos</h3>
             
             <div id="mazosContainer" class="mazos-grid">
-                <!-- Mazos cargados dinámicamente -->
-            </div>
+                </div>
 
             <div id="emptyMazos" class="empty-state">
                 <h3>No hay mazos guardados</h3>
@@ -423,7 +423,6 @@
             </div>
         </div>
 
-        <!-- SECCIÓN DE ADMINISTRACIÓN (solo para admins) -->
         <div id="adminSection" class="admin-section hidden">
             <h2>⚙️ Panel de Administración</h2>
             <p style="color: #ccc; margin-bottom: 20px;">Como administrador, tienes acceso a herramientas especiales para gestionar el contenido del juego.</p>
@@ -453,9 +452,8 @@
         </div>
     </div>
 
-    <!-- MODAL DE DETALLE DE MAZO -->
     <div id="mazoDetailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
-        <div style="background: rgba(59, 0, 102, 0.95); border: 2px solid var(--primary-purple); border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; color: #fff;">
+        <div style="background: rgba(59, 0, 102, 0.95); border: 2px solid var(--primary-purple); border-radius: 12px; padding: 30px; max-width: 90%; width: 1200px; max-height: 90vh; overflow-y: hidden; color: #fff; display: flex; flex-direction: column;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--secondary-green); padding-bottom: 15px;">
                 <div>
                     <h2 id="mazoDetailTitle" style="font-family: 'Metal Mania'; font-size: 1.8rem; color: var(--secondary-green); margin: 0; text-transform: uppercase;">Nombre del Mazo</h2>
@@ -466,24 +464,38 @@
 
             <input type="hidden" id="mazoDetailId">
 
-            <div id="mazoDetailStats" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 3px solid var(--secondary-green);">
-                <p style="margin: 5px 0; color: #ccc;"><strong>Total de Cartas:</strong> <span style="color: var(--secondary-green);">0</span></p>
-                <p style="margin: 5px 0; color: #ccc;"><strong>Fuerza Total:</strong> <span style="color: var(--secondary-green);">0</span></p>
-                <p style="margin: 5px 0; color: #ccc;"><strong>Creado:</strong> <span style="color: #999;">--</span></p>
+            <div style="flex-grow: 1; display: flex; gap: 20px; overflow-y: hidden;">
+                <div style="width: 300px; min-width: 300px; overflow-y: auto; padding-right: 15px;">
+                    <div id="mazoDetailStats" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 3px solid var(--secondary-green);">
+                        <p style="margin: 5px 0; color: #ccc;"><strong>Total de Cartas:</strong> <span style="color: var(--secondary-green);">0</span></p>
+                        <p style="margin: 5px 0; color: #ccc;"><strong>Fuerza Total:</strong> <span style="color: var(--secondary-green);">0</span></p>
+                        <p style="margin: 5px 0; color: #ccc;"><strong>Creado:</strong> <span style="color: #999;">--</span></p>
+                    </div>
+
+                    <h3 style="color: var(--primary-purple); margin-top: 0; margin-bottom: 10px; text-transform: uppercase;">Mazo de Dioses</h3>
+                    <ul id="godCardsList" style="list-style: none; padding: 0; margin: 0 0 20px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px;">
+                        <li style="color: #999;">Sin cartas</li>
+                    </ul>
+
+                    <h3 style="color: var(--primary-purple); margin-bottom: 10px; text-transform: uppercase;">Mazo de Designios</h3>
+                    <ul id="destinyCardsList" style="list-style: none; padding: 0; margin: 0 0 20px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px;">
+                        <li style="color: #999;">Sin cartas</li>
+                    </ul>
+                </div>
+
+                <div style="flex-grow: 1; overflow-y: auto; padding-right: 15px;">
+                    <h3 style="color: var(--secondary-green); margin-top: 0; margin-bottom: 10px; text-transform: uppercase;">Vista de Cartas</h3>
+                    <div id="cardGallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px;">
+                        <p id="galleryPlaceholder" style="color: #aaa; text-align: center; grid-column: 1/-1;">Cargando imágenes de las cartas...</p>
+                    </div>
+                </div>
             </div>
 
-            <h3 style="color: var(--primary-purple); margin-top: 20px; margin-bottom: 10px; text-transform: uppercase;">Mazo de Dioses</h3>
-            <ul id="godCardsList" style="list-style: none; padding: 0; margin: 0 0 20px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px; max-height: 150px; overflow-y: auto;">
-                <li style="color: #999;">Sin cartas</li>
-            </ul>
-
-            <h3 style="color: var(--primary-purple); margin-bottom: 10px; text-transform: uppercase;">Mazo de Designios</h3>
-            <ul id="destinyCardsList" style="list-style: none; padding: 0; margin: 0 0 20px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px; max-height: 150px; overflow-y: auto;">
-                <li style="color: #999;">Sin cartas</li>
-            </ul>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button onclick="descargarMazo('json')" style="padding: 10px; background: var(--secondary-green); color: var(--background-dark); border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase;">📥 Descargar JSON</button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 20px;">
+                <button onclick="descargarMazo('json')" style="padding: 10px; background: var(--secondary-green); color: var(--background-dark); border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase;">📥 JSON</button>
+                
+                <button onclick="descargarMazo('tts')" style="padding: 10px; background: var(--secondary-green); color: var(--background-dark); border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase;">📦 TTS (.zip)</button>
+                
                 <button onclick="cerrarModalMazo()" style="padding: 10px; background: var(--primary-purple); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase;">Cerrar</button>
             </div>
         </div>
@@ -499,33 +511,28 @@
     </footer>
 
     <script>
+        // --- Variable global para guardar los mazos ---
+        let allUserMazos = []; 
+
         // Verificar sesión al cargar
         window.addEventListener('DOMContentLoaded', async function() {
             try {
                 const response = await fetch('/The-Conjurer/check_session.php', { credentials: 'same-origin' });
                 const session = await response.json();
 
-                console.log('Respuesta de check_session.php:', session);
-
                 if (!session.logged_in) {
                     window.location.href = 'auth.html';
                     return;
                 }
 
-                // Llenar datos del usuario
-                console.log('Asignando nombre:', session.nombre_usuario);
-                console.log('Asignando email:', session.email);
                 document.getElementById('userName').textContent = session.nombre_usuario || 'Usuario';
                 document.getElementById('userEmail').textContent = session.email || 'email@ejemplo.com';
-
-                // Calcular días desde registro
-                const diasDesdeRegistro = Math.floor(Math.random() * 30) + 1;
+                
+                const diasDesdeRegistro = Math.floor(Math.random() * 30) + 1; // Simulación
                 document.getElementById('userDate').textContent = `Miembro desde hace ${diasDesdeRegistro} días`;
 
-                // Cargar mazos
                 loadMazos();
 
-                // Mostrar panel admin si es administrador
                 if (session.es_admin) {
                     document.getElementById('adminSection').classList.remove('hidden');
                 }
@@ -539,7 +546,6 @@
         async function loadMazos() {
             const container = document.getElementById('mazosContainer');
             const emptyState = document.getElementById('emptyMazos');
-
             container.innerHTML = '<p style="text-align: center; color: #aaa;">Cargando mazos...</p>';
 
             try {
@@ -550,9 +556,9 @@
                     throw new Error(result.error || 'Error al cargar mazos');
                 }
 
-                const mazos = result.mazos || [];
+                allUserMazos = result.mazos || [];
 
-                if (mazos.length === 0) {
+                if (allUserMazos.length === 0) {
                     container.style.display = 'none';
                     emptyState.style.display = 'block';
                     return;
@@ -562,16 +568,14 @@
                 emptyState.style.display = 'none';
                 container.innerHTML = '';
 
-                mazos.forEach((mazo) => {
+                allUserMazos.forEach((mazo) => {
                     const mazoCard = document.createElement('div');
                     mazoCard.className = 'mazo-card';
-
                     mazoCard.innerHTML = `
                         <div class="mazo-header">
                             <h3 class="mazo-name">${mazo.nombre}</h3>
                             <span class="mazo-badge">${mazo.mitologia || 'Neutral'}</span>
                         </div>
-
                         <div class="mazo-stats">
                             <div class="stat">
                                 <div class="stat-label">Cartas</div>
@@ -582,16 +586,13 @@
                                 <div class="stat-value">${mazo.total_fuerza}</div>
                             </div>
                         </div>
-
                         <p class="mazo-description" style="font-size: 0.8rem; color: #999;">Actualizado: ${new Date(mazo.fecha_actualizacion).toLocaleDateString('es-ES')}</p>
-
                         <div class="mazo-actions">
                             <button class="mazo-btn primary" onclick="verDetalleMazo(${mazo.id})">Ver</button>
                             <button class="mazo-btn" onclick="editarMazo(${mazo.id})">Editar</button>
                             <button class="mazo-btn" style="border-color: #ff8787; color: #ff8787;" onclick="eliminarMazo(${mazo.id})">Eliminar</button>
                         </div>
                     `;
-
                     container.appendChild(mazoCard);
                 });
             } catch (error) {
@@ -613,7 +614,6 @@
             if (!confirm('¿Estás seguro de que deseas eliminar este mazo? Esta acción no se puede deshacer.')) {
                 return;
             }
-
             try {
                 const response = await fetch('/The-Conjurer/delete_mazo.php', {
                     method: 'POST',
@@ -621,12 +621,10 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ mazo_id: mazoId })
                 });
-
                 const result = await response.json();
-
                 if (result.success) {
                     alert('✅ Mazo eliminado');
-                    loadMazos();
+                    loadMazos(); // Recarga la lista de mazos
                 } else {
                     alert('❌ Error: ' + result.error);
                 }
@@ -637,20 +635,12 @@
         }
 
         function abrirModalDetalleMazo(mazoId) {
-            fetch('/The-Conjurer/get_mazos.php', { credentials: 'same-origin' })
-                .then(r => r.json())
-                .then(data => {
-                    const mazo = data.mazos.find(m => m.id === mazoId);
-                    if (!mazo) {
-                        alert('No se encontró el mazo');
-                        return;
-                    }
-                    mostrarModalMazo(mazo);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error al cargar detalles del mazo');
-                });
+            const mazo = allUserMazos.find(m => m.id === mazoId);
+            if (!mazo) {
+                alert('No se encontró el mazo');
+                return;
+            }
+            mostrarModalMazo(mazo);
         }
 
         function mostrarModalMazo(mazo) {
@@ -658,6 +648,7 @@
             const mazoData = mazo.mazo_data;
             const mazoCards = mazoData.mazoCards || {};
             const cardsDetails = mazoData.cardsDetails || [];
+            const cardGallery = document.getElementById('cardGallery');
 
             const godCards = cardsDetails.filter(c => ['Panteón', 'Personaje', 'Recurso', 'Evento'].includes(c.Tipo));
             const destinyCards = cardsDetails.filter(c => ['Acción', 'Invocación', 'Equipo'].includes(c.Tipo));
@@ -674,7 +665,31 @@
 
             if (!godCardsHTML) godCardsHTML = '<li style="color: #999;">Sin cartas</li>';
             if (!destinyCardsHTML) destinyCardsHTML = '<li style="color: #999;">Sin cartas</li>';
+            
+            const allCards = [...godCards, ...destinyCards];
+            let galleryHTML = allCards.map(card => {
+                const count = mazoCards[card.ID] || 1;
+                const cardImageUrl = card['URL-IMG'] || 'placeholder_card.jpg'; 
+                
+                return Array.from({ length: count }, (_, i) => {
+                    return `
+                        <div style="position: relative; border: 1px solid var(--primary-purple); border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">
+                            <img 
+                                src="${cardImageUrl}" 
+                                onerror="this.onerror=null; this.src='placeholder_card.jpg';" 
+                                alt="${card.Nombre}" 
+                                style="width: 100%; height: auto; display: block;"
+                            >
+                            <div style="position: absolute; top: 5px; left: 5px; background: var(--secondary-green); color: var(--background-dark); border-radius: 4px; padding: 2px 6px; font-weight: bold; font-size: 0.75rem;">
+                                ${card.Tipo ? card.Tipo.charAt(0) : '?'}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }).join('');
 
+            if (!galleryHTML) galleryHTML = '<p style="color: #aaa; text-align: center; grid-column: 1/-1;">No hay cartas para mostrar.</p>';
+            
             document.getElementById('mazoDetailTitle').textContent = mazo.nombre;
             document.getElementById('mazoDetailMythology').textContent = mazo.mitologia || 'Neutral';
             document.getElementById('mazoDetailStats').innerHTML = `
@@ -685,6 +700,7 @@
             document.getElementById('godCardsList').innerHTML = godCardsHTML;
             document.getElementById('destinyCardsList').innerHTML = destinyCardsHTML;
             document.getElementById('mazoDetailId').value = mazo.id;
+            cardGallery.innerHTML = galleryHTML; 
 
             modal.style.display = 'flex';
         }
@@ -696,21 +712,175 @@
             }
         }
 
+        // --- ✅ INICIO SECCIÓN TTS (Añadida) ---
+        // (Funciones adaptadas de deckbuilder.js)
+
+        function getMazoDetailsFromMazoObject(mazo) {
+            const mazoData = mazo.mazo_data;
+            const mazoCards = mazoData.mazoCards || {};
+            const cardsDetails = mazoData.cardsDetails || [];
+            return cardsDetails.map(card => ({ ...card, count: mazoCards[card.ID] || 1 }));
+        }
+
+        function getCardMazoType(type) {
+            const GOD_MAZO_TYPES = ['Panteón', 'Personaje', 'Recurso', 'Evento'];
+            const DESTINY_MAZO_TYPES = ['Acción', 'Invocación', 'Equipo'];
+            if (GOD_MAZO_TYPES.includes(type)) return 'god';
+            if (DESTINY_MAZO_TYPES.includes(type)) return 'destiny';
+            return 'unknown';
+        }
+
+        function getCardImageURLsImproved(mazo, mazoType) {
+            const allCardsInMazo = getMazoDetailsFromMazoObject(mazo);
+            const cards = allCardsInMazo.filter(c => getCardMazoType(c.Tipo) === mazoType);
+            const urls = [];
+            cards.forEach(card => {
+                const img = card['URL-IMG'] || 'placeholder_card.jpg';
+                for (let i = 0; i < card.count; i++) {
+                    urls.push(img);
+                }
+            });
+            return urls;
+        }
+
+        function generateCompleteChecklist(mazo) {
+            const allCards = getMazoDetailsFromMazoObject(mazo);
+            let checklist = "";
+            allCards.forEach(card => {
+                checklist += `x${card.count} - ${card.Nombre} (${card.Tipo})\n`;
+            });
+            return checklist;
+        }
+
+        async function createMazoCanvasImproved(urls, cols = 10) {
+            if (!urls || urls.length === 0) return null;
+
+            const cardImgs = await Promise.all(urls.map(src => new Promise(resolve => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous'; // Necesario para canvas
+                img.onload = () => resolve(img);
+                img.onerror = () => {
+                    console.warn(`Error cargando imagen: ${src}, usando placeholder.`);
+                    const placeholderImg = new Image();
+                    placeholderImg.src = 'placeholder_card.jpg'; // Asegúrate que este archivo exista
+                    placeholderImg.onload = () => resolve(placeholderImg);
+                    placeholderImg.onerror = () => resolve(null);
+                };
+                img.src = src;
+            })));
+
+            const validImgs = cardImgs.filter(img => img !== null);
+            if (validImgs.length === 0) return null;
+
+            const cardWidth = 250;
+            const cardHeight = 350;
+            const maxCards = 70;
+            const rows = 7;
+            
+            const blankCardCanvas = document.createElement("canvas");
+            blankCardCanvas.width = cardWidth;
+            blankCardCanvas.height = cardHeight;
+            const blankCtx = blankCardCanvas.getContext("2d");
+            blankCtx.fillStyle = "#2a2a2a";
+            blankCtx.fillRect(0, 0, cardWidth, cardHeight);
+            
+            const allImages = [...validImgs];
+            while (allImages.length < maxCards) {
+                allImages.push(blankCardCanvas);
+            }
+            
+            const finalImages = allImages.slice(0, maxCards);
+            const canvas = document.createElement("canvas");
+            canvas.width = cols * cardWidth;
+            canvas.height = rows * cardHeight;
+            const ctx = canvas.getContext("2d");
+
+            finalImages.forEach((img, i) => {
+                const x = (i % cols) * cardWidth;
+                const y = Math.floor(i / cols) * cardHeight;
+                ctx.drawImage(img, x, y, cardWidth, cardHeight);
+            });
+            return canvas;
+        }
+
+        async function exportMazoToTTSImproved(mazo, mazoNombre) {
+            try {
+                if (!window.JSZip) {
+                    alert('❌ Error: La librería JSZip no está cargada.');
+                    return;
+                }
+
+                const godURLs = getCardImageURLsImproved(mazo, "god");
+                const destinyURLs = getCardImageURLsImproved(mazo, "destiny");
+
+                if (godURLs.length === 0 && destinyURLs.length === 0) {
+                    alert("⚠️ No hay cartas en el mazo para exportar.");
+                    return;
+                }
+
+                const zip = new JSZip();
+                
+                if (godURLs.length > 0) {
+                    const godCanvas = await createMazoCanvasImproved(godURLs);
+                    if (godCanvas) {
+                        const godData = godCanvas.toDataURL("image/png").split(",")[1];
+                        zip.file("decksheet_dioses.png", godData, { base64: true });
+                    }
+                }
+                
+                if (destinyURLs.length > 0) {
+                    const destinyCanvas = await createMazoCanvasImproved(destinyURLs);
+                    if (destinyCanvas) {
+                        const destinyData = destinyCanvas.toDataURL("image/png").split(",")[1];
+                        zip.file("decksheet_designios.png", destinyData, { base64: true });
+                    }
+                }
+                
+                try {
+                    const traseraGodResponse = await fetch("GDM/Traseras/TraseraDioses.png");
+                    if (traseraGodResponse.ok) zip.file("TraseraDioses.png", await traseraGodResponse.blob());
+                    
+                    const traseraDestinyResponse = await fetch("GDM/Traseras/TraseraDesignios.png");
+                    if (traseraDestinyResponse.ok) zip.file("TraseraDesignios.png", await traseraDestinyResponse.blob());
+                } catch (error) {
+                    console.warn("No se pudieron cargar las imágenes traseras:", error);
+                }
+                
+                const checklist = generateCompleteChecklist(mazo);
+                zip.file(`${mazoNombre}.txt`, checklist);
+                
+                const blob = await zip.generateAsync({ type: "blob" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                const cleanMazoName = mazoNombre.replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
+                a.download = `${cleanMazoName}_TTS.zip`;
+                a.click();
+                
+                alert(`✅ Pack TTS generado exitosamente!`);
+
+            } catch (error) {
+                console.error("Error en exportación TTS:", error);
+                alert("❌ Error durante la exportación TTS: " + error.message);
+            }
+        }
+        // --- ✅ FIN SECCIÓN TTS ---
+
+
+        // --- ✅ MODIFICADO: descargarMazo ahora maneja 'json' y 'tts' ---
         async function descargarMazo(format) {
             const mazoId = document.getElementById('mazoDetailId').value;
             const mazoNombre = document.getElementById('mazoDetailTitle').textContent;
 
-            try {
-                const response = await fetch('/The-Conjurer/get_mazos.php', { credentials: 'same-origin' });
-                const result = await response.json();
-                const mazo = result.mazos.find(m => m.id === parseInt(mazoId));
+            const mazo = allUserMazos.find(m => m.id === parseInt(mazoId));
 
-                if (!mazo) {
-                    alert('Error al obtener datos del mazo');
-                    return;
-                }
+            if (!mazo) {
+                alert('Error al obtener datos del mazo');
+                return;
+            }
 
-                if (format === 'json') {
+            if (format === 'json') {
+                // Lógica JSON
+                try {
                     const blob = new Blob([JSON.stringify(mazo.mazo_data, null, 2)], { type: 'application/json' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -718,11 +888,15 @@
                     a.download = `${mazoNombre.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
                     a.click();
                     URL.revokeObjectURL(url);
-                    alert('✅ Mazo descargado');
+                    alert('✅ Mazo JSON descargado');
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al descargar JSON: ' + error.message);
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error al descargar: ' + error.message);
+            } else if (format === 'tts') {
+                // Lógica TTS
+                alert('Iniciando generación de pack TTS. Esto puede tardar un momento...');
+                await exportMazoToTTSImproved(mazo, mazoNombre);
             }
         }
 
