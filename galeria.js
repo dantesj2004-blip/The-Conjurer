@@ -1,8 +1,10 @@
-const csvFilePath = 'GDM-CARTAS - Hoja 1 (4).csv';
+// galeria.js - Versión para cargar datos desde MySQL/PHP a través de fetch_cards.php
+const dataUrl = 'fetch_cards.php'; // RUTA AL SCRIPT DE BACKEND
 let allCardsData = []; // Variable global para guardar los datos
 
 document.addEventListener('DOMContentLoaded', () => {
-    loadCSV();
+    // CAMBIO: Llamamos a la función de carga de la base de datos
+    loadCardsFromDatabase();
 
     // Cierra la modal al pulsar la tecla ESCa
     document.addEventListener('keydown', (e) => {
@@ -34,8 +36,8 @@ function closeModal() {
 
 // Función principal para mostrar la modal
 function showCardDetails(cardId) {
-    // Encontrar la carta en los datos guardados
-    const card = allCardsData.find(c => c.ID === cardId);
+    // IMPORTANTE: Se usa String() para asegurar la comparación correcta de ID contra el ID retornado en JSON
+    const card = allCardsData.find(c => String(c.ID) === String(cardId));
     if (!card) return;
 
     const modal = document.getElementById('card-modal');
@@ -45,7 +47,6 @@ function showCardDetails(cardId) {
     const imageContainer = document.querySelector('.modal-image-container');
     
     // --- 1. CONFIGURACIÓN DE IMAGEN Y ROTACIÓN ---
-    // Corregir la ruta de la imagen para el modal también
     const correctedModalImagePath = correctImagePath(card['URL-IMG'], card.Nombre, card.Mitologia, card.ID);
     image.src = correctedModalImagePath;
     nameElement.textContent = card.Nombre;
@@ -124,25 +125,27 @@ function createNameOverlay(cardName) {
     return nameOverlay;
 }
 
-// Función para cargar el CSV y añadir event listeners
-async function loadCSV() {
+// FUNCIÓN REESCRITA PARA CARGAR DATOS DESDE EL BACKEND (PHP/MySQL)
+async function loadCardsFromDatabase() {
     const cardGrid = document.getElementById('card-grid');
     try {
-        const response = await fetch(csvFilePath);
-        const csvText = await response.text();
+        // Hacemos la petición al script PHP, que devuelve JSON
+        const response = await fetch(dataUrl); 
 
-        const rows = csvText.trim().split('\n').map(row => row.trim());
-        const headers = rows[0].split(',');
+        if (!response.ok) {
+            // Maneja el error de conexión o del script PHP
+            throw new Error(`Error HTTP: ${response.status} al solicitar datos.`);
+        }
         
-        allCardsData = rows.slice(1).map(row => {
-            const values = row.split(',');
-            let card = {};
-            headers.forEach((header, i) => {
-                card[header.trim()] = values[i] ? values[i].trim().replace(/"/g, '') : '';
-            });
-            return card;
-        }).filter(card => card.ID && card.Nombre);
+        // Leemos el JSON de la respuesta
+        const data = await response.json(); 
 
+        if (data.error) {
+             // Maneja los errores reportados por el script PHP (ej. error de conexión DB)
+             throw new Error(`Error en el servidor: ${data.error}`);
+        }
+
+        allCardsData = data;
         cardGrid.innerHTML = '';
         
         allCardsData.forEach(card => {
@@ -198,6 +201,7 @@ async function loadCSV() {
                 }
             };
 
+            // Pasamos el ID de la carta para el modal
             container.addEventListener('click', () => showCardDetails(card.ID));
             container.style.cursor = 'pointer'; 
 
@@ -205,7 +209,121 @@ async function loadCSV() {
         });
 
     } catch (error) {
-        console.error('Error al cargar o procesar el CSV:', error);
-        cardGrid.innerHTML = '<p style="color: red;">Error al cargar las cartas. Revisa el archivo CSV y la consola.</p>';
+        console.error('Error al cargar datos desde la DB:', error);
+        cardGrid.innerHTML = `<p style="color: red;">Error al cargar las cartas. Revisa el XAMPP y el fetch_cards.php: ${error.message}</p>`;
     }
+}
+
+// Renderiza un array de cartas en el grid (usa la misma estructura que antes)
+function renderCardGrid(cards) {
+    const cardGrid = document.getElementById('card-grid');
+    if (!cardGrid) return;
+    cardGrid.innerHTML = '';
+
+    cards.forEach(card => {
+        const originalImagePath = card['URL-IMG']; 
+        if (!originalImagePath) return;
+
+        const correctedImagePath = correctImagePath(originalImagePath, card.Nombre, card.Mitologia, card.ID);
+
+        const imgElement = document.createElement('img');
+        imgElement.src = correctedImagePath;
+        imgElement.alt = `Carta ${card.Nombre}`;
+        imgElement.classList.add('card-image');
+
+        const container = document.createElement('div');
+        container.classList.add('card-container');
+        container.style.position = 'relative';
+        container.appendChild(imgElement);
+
+        imgElement.onerror = function() {
+            this.src = 'Logo.png';
+            this.style.opacity = '0.6';
+            this.setAttribute('data-is-placeholder', 'true');
+            if (!container.querySelector('.card-name-overlay')) {
+                const nameOverlay = createNameOverlay(card.Nombre);
+                container.appendChild(nameOverlay);
+            }
+        };
+
+        imgElement.onload = function() {
+            if (this.src.includes('Logo.png')) {
+                this.style.opacity = '0.6';
+                this.setAttribute('data-is-placeholder', 'true');
+                if (!container.querySelector('.card-name-overlay')) {
+                    const nameOverlay = createNameOverlay(card.Nombre);
+                    container.appendChild(nameOverlay);
+                }
+            } else {
+                this.style.opacity = '1';
+                this.removeAttribute('data-is-placeholder');
+                const existingOverlay = container.querySelector('.card-name-overlay');
+                if (existingOverlay) existingOverlay.remove();
+            }
+        };
+
+        container.addEventListener('click', () => showCardDetails(card.ID));
+        container.style.cursor = 'pointer';
+
+        cardGrid.appendChild(container);
+    });
+}
+
+// Poblado robusto de filtros de mitología y era para la galería
+function populateGalleryFilters() {
+    if (!allCardsData || !Array.isArray(allCardsData)) return;
+
+    const mythologyFilter = document.getElementById('mythology-filter');
+    if (mythologyFilter) {
+        const prev = mythologyFilter.value;
+        mythologyFilter.innerHTML = '';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = 'Toda Mitología';
+        mythologyFilter.appendChild(defaultOpt);
+
+        const mythologies = [...new Set(allCardsData.map(c => (c.Mitologia || '').toString().trim()).filter(m => m !== ''))]
+            .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+        mythologies.forEach(m => {
+            const o = document.createElement('option'); o.value = m; o.textContent = m; mythologyFilter.appendChild(o);
+        });
+        mythologyFilter.value = [...mythologyFilter.options].some(o => o.value === prev) ? prev : '';
+    }
+
+    const eraFilter = document.getElementById('era-filter');
+    if (eraFilter) {
+        const prev = eraFilter.value;
+        eraFilter.innerHTML = '';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = 'Toda Era';
+        eraFilter.appendChild(defaultOpt);
+
+        const eras = [...new Set(allCardsData.map(c => (c.Era || '').toString().trim()).filter(e => e !== ''))]
+            .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+        eras.forEach(e => {
+            const o = document.createElement('option'); o.value = e; o.textContent = e; eraFilter.appendChild(o);
+        });
+        eraFilter.value = [...eraFilter.options].some(o => o.value === prev) ? prev : '';
+    }
+}
+
+// Aplica filtros en la galería y renderiza
+function applyGalleryFilters() {
+    const filterTerm = document.getElementById('search-bar')?.value || '';
+    const filterType = document.getElementById('type-filter')?.value || '';
+    const filterMythology = document.getElementById('mythology-filter')?.value || '';
+    const filterEra = document.getElementById('era-filter')?.value || '';
+
+    const filtered = (allCardsData || []).filter(card => {
+        const searchTermMatch = !filterTerm ||
+            (card.Nombre && card.Nombre.toUpperCase().includes(filterTerm.toUpperCase())) ||
+            (card['Texto - Habilidades'] && card['Texto - Habilidades'].toUpperCase().includes(filterTerm.toUpperCase()));
+        const typeMatch = !filterType || card.Tipo === filterType;
+        const mythologyMatch = !filterMythology || card.Mitologia === filterMythology;
+        const eraMatch = !filterEra || card.Era === filterEra;
+        return searchTermMatch && typeMatch && mythologyMatch && eraMatch;
+    });
+
+    renderCardGrid(filtered);
 }

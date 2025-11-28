@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test fetch_cards.php</title>
+</head>
+<body>
+    <h1>Test fetch_cards.php</h1>
+    <button onclick="testFetch()">Test Fetch Cards</button>
+    <div id="result" style="border: 1px solid #ccc; margin-top: 20px; padding: 10px; white-space: pre-wrap; font-family: monospace;"></div>
+
+    <script>
+        async function testFetch() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = 'Cargando...';
+            
+            try {
+                const response = await fetch('/The-Conjurer/fetch_cards.php', { 
+                    credentials: 'same-origin' 
+                });
+                
+                resultDiv.textContent = 'Response status: ' + response.status + '\n';
+                resultDiv.textContent += 'Content-Type: ' + response.headers.get('content-type') + '\n\n';
+                
+                const raw = await response.text();
+                resultDiv.textContent += 'Raw response length: ' + raw.length + ' bytes\n\n';
+                
+                try {
+                    const data = JSON.parse(raw);
+                    resultDiv.textContent += 'JSON parsed successfully!\n';
+                    resultDiv.textContent += 'Number of cards: ' + (Array.isArray(data) ? data.length : 'NOT AN ARRAY') + '\n\n';
+                    resultDiv.textContent += 'First 3 cards:\n';
+                    if (Array.isArray(data) && data.length > 0) {
+                        resultDiv.textContent += JSON.stringify(data.slice(0, 3), null, 2);
+                    }
+                } catch (e) {
+                    resultDiv.textContent += 'JSON parse error: ' + e.message + '\n\n';
+                    resultDiv.textContent += 'First 500 chars of response:\n' + raw.substring(0, 500);
+                }
+            } catch (error) {
+                resultDiv.textContent = 'Fetch error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Conjurer - GDM DeckBuilder</title>
+    <title>NOTICIAS - The Conjurer: Guerra de Mitos</title>
     <link rel="icon" type="image/png" href="Logo.png"> 
     <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="GaleriaCSS.css">
+    <link rel="stylesheet" href="noticias.css">
+    <script src="noticias.js"></script>
 </head>
 <body>
-    
     <header class="main-header">
         <div class="header-top-bar">
             <div class="auth-buttons">
@@ -25,19 +27,28 @@
         
         <nav class="main-nav">
             <a href="index.html">INICIO</a>
-            <a href="Galeria.html" class="active">GALERÍA</a>
+            <a href="Galeria.html">GALERÍA</a>
             <a href="deckbuilder.html">DECKBUILDER</a>
             <a href="reglas.html">REGLAS</a>
-            <a href="noticias.html">NOTICIAS</a>
+            <a href="noticias.html" class="active">NOTICIAS</a>
         </nav>
     </header>
     
-    <main class="gallery-content">
-        <h1 id="gallery-title" class="gallery-title">Galería de Cartas GDM</h1>
+    <main class="news-content">
+        <h1 class="news-title">Últimas Noticias</h1>
         
-        <div id="card-grid" class="card-grid">
-            <p>Cargando cartas...</p> 
+        <div class="news-grid">
+            <!-- Cargado dinámicamente por noticias.js -->
         </div>
+
+        <!-- Sección de Noticias Adicionales (Más Abajo) -->
+        <section class="additional-news">
+            <h2 class="section-subtitle">Más Noticias</h2>
+            
+            <div class="news-list">
+                <!-- Cargado dinámicamente por noticias.js -->
+            </div>
+        </section>
     </main>
 
     <footer class="main-footer">
@@ -47,26 +58,9 @@
                 <p>GDM DeckBuilder Project © 2025</p>
             </div>
         </div>
-    </footer>    <div id="card-modal" class="modal">
-        <div class="modal-content">
-            <button class="modal-close-btn" onclick="closeModal()">×</button>
-            
-            <div class="modal-body">
-                <div class="modal-image-container">
-                    <img id="modal-image" src="" alt="Carta en detalle">
-                </div>
-                
-                <div class="modal-details-container">
-                    <h2 id="modal-card-name"></h2>
-                    <table id="modal-card-table">
-                        </table>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- JavaScript externo -->
-    <script src="galeria.js"></script>
+    </footer>
+
+    <script src="noticias.js"></script>
     <script>
         // Verificar sesión
         window.addEventListener('DOMContentLoaded', async function() {

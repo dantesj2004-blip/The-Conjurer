@@ -18,19 +18,20 @@
 <header class="main-header">
 <div class="header-top-bar">
 <div class="auth-buttons">
-<a class="btn-auth btn-register" href="#">REGISTRARSE</a>
-<a class="btn-auth btn-login" href="index.html">ENTRAR</a>
+<a class="btn-auth btn-register" href="auth.html">REGISTRARSE</a>
+<a class="btn-auth btn-login" href="auth.html">ENTRAR</a>
+<a href="perfil.html" class="btn-auth btn-login hidden" id="userButton" style="display: none;">MI PERFIL</a>
 </div>
 </div>
 <div class="logo-area">
-<img alt="Logo The Conjurer" class="logo-main" src="Logo.png"/>
+<a href="index.html"><img alt="Logo The Conjurer" class="logo-main" src="Logo.png"/></a>
 </div>
 <nav class="main-nav">
 <a href="index.html">INICIO</a>
 <a href="Galeria.html">GALERÍA</a>
-<a class="active" href="#">DECKBUILDER</a>
+<a class="active" href="deckbuilder.html">DECKBUILDER</a>
 <a href="reglas.html">REGLAS</a>
-<a href="#">NOTICIAS</a>
+<a href="noticias.html">NOTICIAS</a>
 </nav>
 </header>
 <main class="deckbuilder-container">
@@ -60,6 +61,9 @@
 <select class="filter-select" id="mythology-filter">
 <option value="">Toda Mitología</option>
 </select>
+<select class="filter-select" id="era-filter">
+<option value="">Toda Era</option>
+</select>
 <button class="btn-auth" onclick="applyFilters()">Aplicar Filtros</button>
 </div>
 <div id="gallery-grid">
@@ -83,7 +87,8 @@
 <div id="god-deck-cards">
 <p class="placeholder">Añade Panteón, Personajes, Recursos, Eventos aquí.</p>
 </div>
-</div>
+        <button class="btn-auth" id="save-mazo-btn" title="Guarda tu mazo en tu cuenta">💾 Guardar Mazo</button>
+    </div>
 <div class="deck-section" id="destiny-deck">
 <h3>Mazo de Designios (<span id="destiny-deck-count">0</span>/30+)</h3>
 <div id="destiny-deck-cards">
@@ -107,5 +112,21 @@
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="deckbuilder.js"></script>
+<script>
+    // Verificar sesión después de que deckbuilder.js esté cargado
+    (async function() {
+        try {
+            const response = await fetch('/The-Conjurer/check_session.php', { credentials: 'same-origin' });
+            const session = await response.json();
+            if (session.logged_in) {
+                document.querySelector('.btn-register').style.display = 'none';
+                document.querySelector('.btn-login').style.display = 'none';
+                document.getElementById('userButton').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error al verificar sesión:', error);
+        }
+    })();
+</script>
 </body>
 </html>

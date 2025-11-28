@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Conjurer - Login & Register</title>
+    <link rel="icon" type="image/png" href="Logo.png"> 
+    <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-purple: #C873C4;
+            --secondary-green: #97E88D;
+            --background-dark: #1e1e1e;
+            --text-color: #fff;
+            --footer-color: #3b0066;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #1e1e1e 0%, #3b0066 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('ChatGPT Image 27 oct 2025, 10_40_35.png');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.15;
+            z-index: -1;
+        }
+
+        .auth-container {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(30, 30, 30, 0.8);
+            border: 2px solid var(--primary-purple);
+            border-radius: 12px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 60px rgba(200, 115, 196, 0.3);
+        }
+
+        .auth-left {
+            flex: 1;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(200, 115, 196, 0.1), rgba(151, 232, 141, 0.05));
+        }
+
+        .auth-right {
+            flex: 1;
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .logo-auth {
+            max-width: 200px;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            font-family: 'Metal Mania', cursive;
+            font-size: 2.5rem;
+            color: var(--primary-purple);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: var(--secondary-green);
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--secondary-green);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--primary-purple);
+            border-radius: 6px;
+            color: var(--text-color);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--secondary-green);
+            box-shadow: 0 0 15px rgba(151, 232, 141, 0.3);
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--secondary-green));
+            color: var(--background-dark);
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(200, 115, 196, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .toggle-form {
+            text-align: center;
+            margin-top: 20px;
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        .toggle-form a {
+            color: var(--secondary-green);
+            text-decoration: none;
+            font-weight: 700;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .toggle-form a:hover {
+            color: var(--primary-purple);
+        }
+
+        .message {
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            display: none;
+            text-align: center;
+        }
+
+        .message.success {
+            background: rgba(151, 232, 141, 0.2);
+            border: 1px solid var(--secondary-green);
+            color: var(--secondary-green);
+            display: block;
+        }
+
+        .message.error {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid #ff6b6b;
+            color: #ff8787;
+            display: block;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        /* Logo en esquina */
+        .logo-corner {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            max-width: 120px;
+            height: auto;
+            z-index: 10;
+        }
+
+        /* Responsive */
+        @media (max-width: 960px) {
+            .auth-container {
+                flex-direction: column;
+                max-width: 500px;
+            }
+
+            .auth-left {
+                padding: 40px 30px;
+                border-bottom: 2px solid var(--primary-purple);
+            }
+
+            .auth-right {
+                padding: 40px 30px;
+            }
+
+            h2 {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 20px;
+            }
+
+            .auth-container {
+                border-radius: 8px;
+            }
+
+            .auth-left,
+            .auth-right {
+                padding: 30px 20px;
+            }
+
+            h2 {
+                font-size: 1.6rem;
+            }
+
+            .logo-auth {
+                max-width: 150px;
+            }
+
+            .logo-corner {
+                max-width: 90px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html"><img src="Logo.png" alt="Logo" class="logo-corner"></a>
+
+    <div class="auth-container">
+        <!-- LOGIN -->
+        <div class="auth-left">
+            <img src="Logo.png" alt="Logo" class="logo-auth">
+            <h2>Bienvenido</h2>
+            <p class="subtitle">Inicia sesión para acceder</p>
+
+            <div id="loginMessage" class="message"></div>
+
+            <form id="loginForm" class="form-section active">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" placeholder="tu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Contraseña</label>
+                    <input type="password" id="loginPassword" placeholder="Tu contraseña" required>
+                </div>
+                <button type="submit">Iniciar Sesión</button>
+            </form>
+
+            <div class="toggle-form">
+                ¿No tienes cuenta? <a onclick="toggleForms()">Regístrate</a>
+            </div>
+        </div>
+
+        <!-- REGISTER -->
+        <div class="auth-right">
+            <h2>Nuevo Jugador</h2>
+            <p class="subtitle">Crea tu cuenta de The Conjurer</p>
+
+            <div id="registerMessage" class="message"></div>
+
+            <form id="registerForm" class="form-section">
+                <div class="form-group">
+                    <label for="registerUsername">Usuario</label>
+                    <input type="text" id="registerUsername" placeholder="Tu nombre de usuario" required minlength="3">
+                </div>
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" placeholder="tu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Contraseña</label>
+                    <input type="password" id="registerPassword" placeholder="Mínimo 6 caracteres" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="registerPasswordConfirm">Confirmar Contraseña</label>
+                    <input type="password" id="registerPasswordConfirm" placeholder="Confirma tu contraseña" required>
+                </div>
+                <button type="submit">Crear Cuenta</button>
+            </form>
+
+            <div class="toggle-form">
+                ¿Ya tienes cuenta? <a onclick="toggleForms()">Inicia Sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleForms() {
+            document.getElementById('loginForm').classList.toggle('active');
+            document.getElementById('registerForm').classList.toggle('active');
+            document.getElementById('loginMessage').className = 'message';
+            document.getElementById('registerMessage').className = 'message';
+        }
+
+        // LOGIN
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const messageDiv = document.getElementById('loginMessage');
+
+            try {
+                const response = await fetch('/The-Conjurer/login_api.php', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    messageDiv.textContent = '¡Login exitoso! Redirigiendo...';
+                    messageDiv.className = 'message success';
+                    setTimeout(() => window.location.href = 'perfil.html', 2000);
+                } else {
+                    messageDiv.textContent = result.error;
+                    messageDiv.className = 'message error';
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Error: ' + error.message;
+                messageDiv.className = 'message error';
+            }
+        });
+
+        // REGISTER
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const nombre_usuario = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const password_confirmation = document.getElementById('registerPasswordConfirm').value;
+            const messageDiv = document.getElementById('registerMessage');
+
+            // Validar formato de email más estricto (RFC 5322 simplificado)
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                messageDiv.textContent = '❌ Email inválido. Asegúrate de usar un formato válido (ej: usuario@dominio.com)';
+                messageDiv.className = 'message error';
+                return;
+            }
+
+            // Validar que el dominio tenga al menos 2 caracteres antes del punto
+            const domainRegex = /^[^\s@]+@[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/;
+            if (!domainRegex.test(email)) {
+                messageDiv.textContent = '❌ Email inválido. El dominio debe ser válido (ej: usuario@gmail.com)';
+                messageDiv.className = 'message error';
+                return;
+            }
+
+            // Validar que las contraseñas coincidan
+            if (password !== password_confirmation) {
+                messageDiv.textContent = '❌ Las contraseñas no coinciden';
+                messageDiv.className = 'message error';
+                return;
+            }
+
+            try {
+                const response = await fetch('/The-Conjurer/register_api.php', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre_usuario, email, password, password_confirmation })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    messageDiv.textContent = '¡Registro exitoso! Redirigiendo a tu perfil...';
+                    messageDiv.className = 'message success';
+                    setTimeout(() => window.location.href = 'perfil.html', 2000);
+                } else {
+                    messageDiv.textContent = result.error;
+                    messageDiv.className = 'message error';
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Error: ' + error.message;
+                messageDiv.className = 'message error';
+            }
+        });
+    </script>
+</body>
+</html>

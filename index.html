@@ -261,8 +261,9 @@
     <header class="main-header">
         <div class="header-top-bar">
             <div class="auth-buttons">
-                <a href="#" class="btn-auth btn-register">REGISTRARSE</a>
-                <a href="index.html" class="btn-auth btn-login">ENTRAR</a>
+                <a href="auth.html" class="btn-auth btn-register">REGISTRARSE</a>
+                <a href="auth.html" class="btn-auth btn-login">ENTRAR</a>
+                <a href="perfil.html" class="btn-auth btn-login hidden" id="userButton" style="display: none;">MI PERFIL</a>
             </div>
         </div>
         
@@ -275,7 +276,7 @@
             <a href="Galeria.html">GALERÍA</a>
             <a href="deckbuilder.html">DECKBUILDER</a>
             <a href="reglas.html">REGLAS</a>
-            <a href="#">NOTICIAS</a>
+            <a href="noticias.html">NOTICIAS</a>
         </nav>
     </header>
     
@@ -304,7 +305,7 @@
             
             <h1 class="section-title">Descubre "Guerra de Mitos": El Renacer de una Leyenda</h1>
             
-            <a href="#" class="article-card article-card-full">
+            <a href="Galeria.html" class="article-card article-card-full">
                 <img src="GDM/BLOG/The Conjurer.png" alt="Artículo Principal: Guerra de Mitos">
                 <div class="article-content">
                     <span class="article-tag">PROYECTO</span>
@@ -315,7 +316,7 @@
 
             <div class="right-column-grid">
                 
-                <a href="#" class="article-card">
+                <a href="Galeria.html" class="article-card">
                     <img src="GDM/BLOG/DSC06295.JPG" alt="Mazo de Dioses">
                     <div class="article-content">
                         <span class="article-tag">ESTRATEGIA</span>
@@ -331,7 +332,7 @@
                     </div>
                 </a>
 
-                <a href="#"  class="article-card">
+                <a href="deckbuilder.html" class="article-card">
                     <img src="GDM/BLOG/DSC06283.JPG" alt="No es TCG">
                     <div class="article-content">
                         <span class="article-tag">DIFERENCIAS</span>
@@ -375,5 +376,24 @@
         </div>
     </footer>
 
+    <script>
+        // Verificar sesión y actualizar botones
+        window.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/The-Conjurer/check_session.php', { credentials: 'same-origin' });
+                const session = await response.json();
+
+                if (session.logged_in) {
+                    // Ocultar botones de login/register
+                    document.querySelector('.btn-register').style.display = 'none';
+                    document.querySelector('.btn-login').style.display = 'none';
+                    // Mostrar botón de perfil
+                    document.getElementById('userButton').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error checking session:', error);
+            }
+        });
+    </script>
 </body>
 </html>

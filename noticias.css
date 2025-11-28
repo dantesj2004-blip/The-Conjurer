@@ -1,0 +1,480 @@
+/* NOTICIAS PAGE STYLES */
+
+.news-content {
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 0 20px;
+    min-height: calc(100vh - 400px);
+}
+
+.news-title {
+    text-align: center;
+    font-family: 'Metal Mania', cursive;
+    font-size: 3rem;
+    color: var(--primary-purple);
+    text-transform: uppercase;
+    margin-bottom: 50px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    letter-spacing: 2px;
+}
+
+/* LAYOUT PRINCIPAL: Noticia Grande + Grid 2x2 */
+.news-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-bottom: 60px;
+}
+
+/* Noticia Grande (Columna Izquierda) */
+.news-card-featured {
+    grid-row: span 2;
+}
+
+.news-card-featured .news-image-container {
+    height: 500px;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.news-card-featured .news-content-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.95), transparent);
+    padding: 40px 30px 30px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.news-card-featured .news-headline {
+    font-size: 2rem;
+    margin: 15px 0 10px 0;
+    line-height: 1.3;
+}
+
+.news-card-featured .news-excerpt {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+/* Grid Derecha: 2x2 */
+.news-grid-right {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 20px;
+}
+
+/* Tarjetas Secundarias */
+.news-card {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--background-dark);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid var(--primary-purple);
+}
+
+.news-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(200, 115, 196, 0.4);
+}
+
+.news-image-container {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+}
+
+.news-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.news-card:hover .news-image {
+    transform: scale(1.05);
+}
+
+.news-content-overlay {
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(59, 0, 102, 0.6));
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    flex-grow: 1;
+}
+
+.news-date {
+    font-size: 0.75rem;
+    color: var(--secondary-green);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.news-headline {
+    font-family: 'Metal Mania', cursive;
+    font-size: 1.3rem;
+    color: var(--secondary-green);
+    margin: 0 0 10px 0;
+    line-height: 1.3;
+    text-transform: uppercase;
+}
+
+.news-card-secondary .news-headline {
+    font-size: 1rem;
+}
+
+.news-excerpt {
+    font-size: 0.9rem;
+    color: #ccc;
+    line-height: 1.4;
+    margin-bottom: 12px;
+    flex-grow: 1;
+}
+
+.news-link {
+    display: inline-block;
+    color: var(--secondary-green);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.85rem;
+    transition: color 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.news-link:hover {
+    color: var(--primary-purple);
+}
+
+/* SECCIÓN DE NOTICIAS ADICIONALES */
+.additional-news {
+    background: linear-gradient(135deg, rgba(59, 0, 102, 0.1), rgba(151, 232, 141, 0.05));
+    border: 2px solid var(--primary-purple);
+    border-radius: 8px;
+    padding: 40px;
+    margin: 60px 0 40px 0;
+}
+
+.section-subtitle {
+    font-family: 'Metal Mania', cursive;
+    font-size: 2rem;
+    color: var(--primary-purple);
+    text-transform: uppercase;
+    margin: 0 0 30px 0;
+    letter-spacing: 1px;
+}
+
+.news-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.news-list-item {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-left: 4px solid var(--secondary-green);
+    border-radius: 4px;
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.news-list-item:hover {
+    background: rgba(200, 115, 196, 0.1);
+    transform: translateX(5px);
+}
+
+.news-list-date {
+    font-family: 'Metal Mania', cursive;
+    font-size: 1.2rem;
+    color: var(--primary-purple);
+    font-weight: bold;
+    text-align: center;
+    padding-top: 5px;
+}
+
+.news-list-content h4 {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+    color: var(--secondary-green);
+    text-transform: uppercase;
+}
+
+.news-list-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #ccc;
+    line-height: 1.4;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 1024px) {
+    .news-title {
+        font-size: 2rem;
+    }
+
+    .news-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .news-card-featured {
+        grid-row: span 1;
+    }
+
+    .news-card-featured .news-image-container {
+        height: 300px;
+    }
+
+    .news-grid-right {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .news-content {
+        margin: 20px auto;
+        padding: 0 15px;
+    }
+
+    .news-title {
+        font-size: 1.8rem;
+        margin-bottom: 30px;
+    }
+
+    .news-card-featured .news-image-container {
+        height: 250px;
+    }
+
+    .news-card-featured .news-content-overlay {
+        padding: 25px 20px 20px;
+    }
+
+    .news-card-featured .news-headline {
+        font-size: 1.5rem;
+    }
+
+    .news-card-featured .news-excerpt {
+        font-size: 0.9rem;
+    }
+
+    .news-grid-right {
+        grid-template-columns: 1fr;
+    }
+
+    .additional-news {
+        padding: 25px;
+        margin: 40px 0 30px 0;
+    }
+
+    .section-subtitle {
+        font-size: 1.5rem;
+    }
+
+    .news-list-item {
+        grid-template-columns: 60px 1fr;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .news-title {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+    }
+
+    .news-card-featured .news-image-container {
+        height: 200px;
+    }
+
+    .news-card-featured .news-headline {
+        font-size: 1.2rem;
+    }
+
+    .news-headline {
+        font-size: 0.9rem;
+    }
+
+    .news-excerpt {
+        font-size: 0.8rem;
+    }
+
+    .additional-news {
+        padding: 15px;
+    }
+
+    .section-subtitle {
+        font-size: 1.2rem;
+    }
+
+    .news-list-item {
+        grid-template-columns: 50px 1fr;
+        gap: 10px;
+    }
+}
+
+/* MODAL DE NOTICIA DETALLADA */
+.news-detail-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.news-detail-content {
+    background: var(--background-dark);
+    border: 2px solid var(--primary-purple);
+    border-radius: 12px;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(200, 115, 196, 0.3);
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: var(--primary-purple);
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    z-index: 1001;
+    transition: background 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-modal:hover {
+    background: var(--secondary-green);
+}
+
+.news-detail-image {
+    width: 100%;
+    height: auto;
+    max-height: 400px;
+    object-fit: cover;
+    display: block;
+}
+
+.news-detail-text {
+    padding: 40px;
+    color: var(--text-color);
+}
+
+.news-detail-text h2 {
+    font-family: 'Metal Mania', cursive;
+    font-size: 2.5rem;
+    color: var(--primary-purple);
+    margin: 0 0 15px 0;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.news-detail-date {
+    font-size: 0.9rem;
+    color: var(--secondary-green);
+    margin-bottom: 25px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.news-detail-body {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #ddd;
+}
+
+.news-detail-body h3 {
+    font-family: 'Metal Mania', cursive;
+    color: var(--secondary-green);
+    margin: 25px 0 15px 0;
+    font-size: 1.5rem;
+}
+
+.news-detail-body p {
+    margin: 0 0 15px 0;
+}
+
+.news-detail-body ul,
+.news-detail-body ol {
+    margin: 15px 0 15px 25px;
+}
+
+.news-detail-body li {
+    margin: 8px 0;
+}
+
+.news-detail-body strong {
+    color: var(--secondary-green);
+}
+
+/* Responsive Modal */
+@media (max-width: 768px) {
+    .news-detail-modal {
+        padding: 10px;
+    }
+
+    .news-detail-content {
+        max-height: 95vh;
+        border-radius: 8px;
+    }
+
+    .news-detail-text {
+        padding: 20px;
+    }
+
+    .news-detail-text h2 {
+        font-size: 1.8rem;
+    }
+
+    .news-detail-body {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .news-detail-text {
+        padding: 15px;
+    }
+
+    .news-detail-text h2 {
+        font-size: 1.4rem;
+    }
+
+    .close-modal {
+        width: 40px;
+        height: 40px;
+        font-size: 1.5rem;
+    }
+}

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Noticias</title>
+    <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-purple: #C873C4;
+            --secondary-green: #97E88D;
+            --background-dark: #1e1e1e;
+            --text-color: #fff;
+            --footer-color: #3b0066;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--background-dark);
+            color: var(--text-color);
+            font-family: 'Montserrat', sans-serif;
+            padding: 20px;
+        }
+
+        .admin-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-family: 'Metal Mania', cursive;
+            font-size: 2.5rem;
+            color: var(--primary-purple);
+            margin-bottom: 30px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .form-section {
+            background: rgba(59, 0, 102, 0.3);
+            border: 2px solid var(--primary-purple);
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: var(--secondary-green);
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--primary-purple);
+            color: var(--text-color);
+            border-radius: 4px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--secondary-green);
+            box-shadow: 0 0 10px rgba(151, 232, 141, 0.3);
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--secondary-green);
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            text-transform: none;
+            font-weight: 500;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--primary-purple), var(--secondary-green));
+            color: var(--background-dark);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(200, 115, 196, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b, #ff8787);
+        }
+
+        .message {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .message.success {
+            background: rgba(151, 232, 141, 0.2);
+            border: 1px solid var(--secondary-green);
+            color: var(--secondary-green);
+            display: block;
+        }
+
+        .message.error {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid #ff6b6b;
+            color: #ff8787;
+            display: block;
+        }
+
+        .news-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--primary-purple);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .news-table thead {
+            background: rgba(200, 115, 196, 0.2);
+            border-bottom: 2px solid var(--primary-purple);
+        }
+
+        .news-table th {
+            padding: 12px;
+            text-align: left;
+            color: var(--secondary-green);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        .news-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(200, 115, 196, 0.2);
+        }
+
+        .news-table tbody tr:hover {
+            background: rgba(200, 115, 196, 0.1);
+        }
+
+        .news-table .news-title {
+            color: var(--secondary-green);
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .news-table .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge.featured {
+            background: var(--secondary-green);
+            color: var(--background-dark);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            background: var(--primary-purple);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .btn-small:hover {
+            background: var(--secondary-green);
+            color: var(--background-dark);
+        }
+
+        .btn-delete {
+            background: #ff6b6b;
+        }
+
+        .btn-delete:hover {
+            background: #ff8787;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .news-table {
+                font-size: 0.9rem;
+            }
+
+            .news-table th,
+            .news-table td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1>📰 Panel de Administración de Noticias</h1>
+
+        <div id="message" class="message"></div>
+
+        <div class="form-section">
+            <h2 style="font-family: 'Metal Mania', cursive; color: var(--secondary-green); margin-bottom: 20px; text-transform: uppercase;">
+                Agregar Nueva Noticia
+            </h2>
+
+            <form id="newsForm">
+                <div class="form-group">
+                    <label for="titulo">Título *</label>
+                    <input type="text" id="titulo" name="titulo" required placeholder="Ej: Nueva Expansión Anunciada">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fecha">Fecha de Publicación *</label>
+                        <input type="date" id="fecha" name="fecha" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="imagen_url">URL de Imagen *</label>
+                        <input type="text" id="imagen_url" name="imagen_url" required 
+                               placeholder="https://ejemplo.com/imagen.jpg">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="resumen">Resumen (hasta 200 caracteres) *</label>
+                    <textarea id="resumen" name="resumen" required maxlength="200" 
+                              placeholder="Breve descripción de la noticia..."></textarea>
+                    <small style="color: #999; display: block; margin-top: 5px;">
+                        Caracteres: <span id="charCount">0</span>/200
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="contenido">Contenido Completo *</label>
+                    <textarea id="contenido" name="contenido" required 
+                              placeholder="Contenido detallado (puedes usar HTML: &lt;h3&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;strong&gt;, etc.)"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="es_destacada" name="es_destacada">
+                        <label for="es_destacada">Marcar como noticia destacada (aparece grande en la portada)</label>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit">Publicar Noticia</button>
+                    <button type="reset">Limpiar Formulario</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="form-section">
+            <h2 style="font-family: 'Metal Mania', cursive; color: var(--secondary-green); margin-bottom: 20px; text-transform: uppercase;">
+                Noticias Publicadas
+            </h2>
+            <div id="newsListContainer" style="overflow-x: auto;">
+                <table class="news-table">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="newsTableBody">
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #999;">Cargando noticias...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('newsForm');
+        const messageDiv = document.getElementById('message');
+        const charCountSpan = document.getElementById('charCount');
+        const resumenTextarea = document.getElementById('resumen');
+        const fechaInput = document.getElementById('fecha');
+
+        // Establecer fecha de hoy por defecto
+        const today = new Date().toISOString().split('T')[0];
+        fechaInput.value = today;
+
+        // Actualizar contador de caracteres
+        resumenTextarea.addEventListener('input', function() {
+            charCountSpan.textContent = this.value.length;
+        });
+
+        // Cargar noticias al abrir la página
+        window.addEventListener('DOMContentLoaded', loadNewsList);
+
+        // Enviar formulario
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const titulo = document.getElementById('titulo').value;
+            const fecha = document.getElementById('fecha').value;
+            const imagen_url = document.getElementById('imagen_url').value;
+            const resumen = document.getElementById('resumen').value;
+            const contenido = document.getElementById('contenido').value;
+            const es_destacada = document.getElementById('es_destacada').checked ? 1 : 0;
+
+            try {
+                const response = await fetch('/The-Conjurer/add_noticia.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        titulo,
+                        fecha,
+                        imagen_url,
+                        resumen,
+                        contenido,
+                        es_destacada
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage('Noticia publicada exitosamente!', 'success');
+                    form.reset();
+                    fechaInput.value = today;
+                    charCountSpan.textContent = '0';
+                    loadNewsList();
+                } else {
+                    showMessage('Error: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Error al publicar: ' + error.message, 'error');
+            }
+        });
+
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = 'message ' + type;
+            setTimeout(() => {
+                messageDiv.className = 'message';
+            }, 4000);
+        }
+
+        async function loadNewsList() {
+            try {
+                const response = await fetch('/The-Conjurer/fetch_noticias.php');
+                const noticias = await response.json();
+
+                const tbody = document.getElementById('newsTableBody');
+                tbody.innerHTML = '';
+
+                if (noticias.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">No hay noticias publicadas</td></tr>';
+                    return;
+                }
+
+                noticias.forEach(noticia => {
+                    const row = document.createElement('tr');
+                    const fechaFormato = new Date(noticia.fecha).toLocaleDateString('es-ES');
+                    
+                    row.innerHTML = `
+                        <td class="news-title">${noticia.titulo}</td>
+                        <td>${fechaFormato}</td>
+                        <td>
+                            ${noticia.es_destacada ? '<span class="badge featured">Destacada</span>' : '<span style="color: #999;">Normal</span>'}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn-small" onclick="editNoticia(${noticia.id})">Editar</button>
+                                <button class="btn-small btn-delete" onclick="deleteNoticia(${noticia.id})">Eliminar</button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading news:', error);
+            }
+        }
+
+        function editNoticia(id) {
+            alert('Función de edición próximamente. ID: ' + id);
+            // TODO: Implementar edición
+        }
+
+        async function deleteNoticia(id) {
+            if (confirm('¿Estás seguro de que deseas eliminar esta noticia?')) {
+                try {
+                    const response = await fetch('/The-Conjurer/delete_noticia.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ id })
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        showMessage('Noticia eliminada', 'success');
+                        loadNewsList();
+                    } else {
+                        showMessage('Error al eliminar', 'error');
+                    }
+                } catch (error) {
+                    showMessage('Error: ' + error.message, 'error');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

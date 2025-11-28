@@ -4,6 +4,110 @@
         let currentPantheon = null; // Mitología del Panteón seleccionado
         const CSV_FILE_PATH = "GDM-CARTAS - Hoja 1 (4).csv"; 
 
+        // --- GUARDAR MAZO EN BD ---
+        async function saveMazoToDatabase() {
+            if (!allCardsData || allCardsData.length === 0) {
+                alert('⚠️ Carga las cartas primero');
+                return;
+            }
+
+            const cardsInMazo = getCurrentMazoCardDetails();
+            let godMazoTotal = 0;
+            let destinyMazoTotal = 0;
+            let pantheonCount = 0;
+
+            cardsInMazo.forEach(card => {
+                const mazoType = getCardMazoType(card.Tipo);
+                if (mazoType === 'god') godMazoTotal += card.count;
+                else if (mazoType === 'destiny') destinyMazoTotal += card.count;
+                if (card.Tipo === 'Panteón') pantheonCount += card.count;
+            });
+
+            const meetsRequirements = (godMazoTotal >= MIN_GOD_MAZO) && (destinyMazoTotal >= MIN_DESTINY_MAZO) && (pantheonCount === 1);
+            if (!meetsRequirements) {
+                alert("⚠️ No se puede guardar. Revisa los requisitos mínimos del mazo.");
+                return;
+            }
+
+            const mazoName = document.getElementById('deck-name').textContent || "Mi Mazo";
+            
+            const mazoData = {
+                mazoCards: mazoCards,
+                currentPantheon: currentPantheon,
+                cardsDetails: cardsInMazo
+            };
+
+            try {
+                const response = await fetch('/The-Conjurer/save_mazo.php', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nombre: mazoName,
+                        mitologia: currentPantheon,
+                        mazoData: mazoData,
+                        mazo_id: sessionStorage.getItem('editingMazoId') || null
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(`✅ ${result.message}!`);
+                    sessionStorage.removeItem('editingMazoId');
+                } else {
+                    alert('❌ Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error al guardar mazo:', error);
+                alert('❌ Error al guardar: ' + error.message);
+            }
+        }
+
+        // --- CARGAR MAZO DESDE BD (editándolo desde perfil) ---
+        async function loadMazoFromDatabase() {
+            const mazoId = sessionStorage.getItem('editingMazoId');
+            if (!mazoId || !allCardsData || allCardsData.length === 0) return;
+
+            try {
+                const response = await fetch('/The-Conjurer/get_mazos.php', { credentials: 'same-origin' });
+                const result = await response.json();
+                const mazo = result.mazos.find(m => m.id === parseInt(mazoId));
+
+                if (!mazo) {
+                    console.warn('No se encontró el mazo en la BD');
+                    return;
+                }
+
+                const mazoData = mazo.mazo_data;
+
+                // Restaurar datos del mazo
+                mazoCards = mazoData.mazoCards || {};
+                currentPantheon = mazoData.currentPantheon || null;
+
+                // Restaurar nombre
+                document.getElementById('deck-name').textContent = mazo.nombre;
+                localStorage.setItem('gdmDeckName', mazo.nombre);
+
+                // Re-renderizar
+                renderMazoList();
+                renderPantheonInfo();
+                applyFilters();
+
+                console.log('Mazo cargado desde BD:', mazo.nombre);
+                alert(`✅ Mazo "${mazo.nombre}" cargado para editar`);
+            } catch (error) {
+                console.error('Error al cargar mazo desde BD:', error);
+            }
+        }
+
+        // --- SETUP BOTÓN GUARDAR ---
+        function setupSaveMazoButton() {
+            const saveMazoBtn = document.getElementById('save-mazo-btn');
+            if (saveMazoBtn) {
+                saveMazoBtn.addEventListener('click', saveMazoToDatabase);
+            }
+        }
         // === EXPORTAR / IMPORTAR MAZO ===
 
 
@@ -56,11 +160,73 @@ function importMazoFromJSON(event) {
                 alert("El archivo no contiene un mazo válido.");
                 return;
             }
-            mazoCards = data.mazoCards || data.deckCards;
+
+            const sourceMazo = data.mazoCards || data.deckCards;
+            const sourceDetails = data.cardsDetails || data.cards || data.cardDetails || null;
+
+            // Intentar mapear keys (IDs) del JSON a los IDs locales. Si no se encuentran, buscar por Nombre.
+            const mappedMazo = {};
+            const missing = [];
+
+            for (const key of Object.keys(sourceMazo)) {
+                const count = sourceMazo[key];
+
+                // 1) Si existe directamente por ID en la colección local
+                if (getCardById(key)) {
+                    mappedMazo[key] = count;
+                    continue;
+                }
+
+                // 2) Si tenemos detalles en el archivo, intentar obtener el nombre asociado a esa key
+                let nombreFromSource = null;
+                if (sourceDetails && Array.isArray(sourceDetails)) {
+                    const found = sourceDetails.find(d => (d.ID && String(d.ID) === String(key)) || (d.id && String(d.id) === String(key)));
+                    if (found) nombreFromSource = found.Nombre || found.nombre || found.name || null;
+                }
+
+                // 3) Si la key parece más un nombre (no contiene guiones largos o UUID), probar como nombre
+                if (!nombreFromSource) {
+                    // Heurística: si la key contiene espacios o letras, puede ser un nombre
+                    if (/\s|[A-Za-zÁÉÍÓÚáéíóúÑñ]/.test(key)) {
+                        nombreFromSource = key;
+                    }
+                }
+
+                // 4) Si tenemos un nombre, buscar carta local por nombre (case-insensitive)
+                if (nombreFromSource) {
+                    const local = allCardsData.find(c => c.Nombre && c.Nombre.trim().toLowerCase() === String(nombreFromSource).trim().toLowerCase());
+                    if (local) {
+                        mappedMazo[local.ID] = count;
+                        continue;
+                    }
+                }
+
+                // 5) Como último recurso, intentar buscar por nombre parcial
+                if (nombreFromSource) {
+                    const localPartial = allCardsData.find(c => c.Nombre && c.Nombre.toLowerCase().includes(String(nombreFromSource).trim().toLowerCase().split(' ')[0]));
+                    if (localPartial) {
+                        mappedMazo[localPartial.ID] = count;
+                        continue;
+                    }
+                }
+
+                // Si no se pudo mapear, almacenar como missing
+                missing.push(key);
+            }
+
+            // Aplicar mazo mapeado parcialmente (si hubo mapeos)
+            const mappedKeys = Object.keys(mappedMazo);
+            if (mappedKeys.length === 0 && missing.length > 0) {
+                alert('No se pudieron mapear las cartas del JSON con las cartas cargadas localmente. Asegúrate de que las cartas estén cargadas desde la BD antes de importar.');
+                return;
+            }
+
+            // Asignar mazo mapeado
+            mazoCards = mappedMazo;
             currentPantheon = data.currentPantheon || null;
-            
+
             // Importar nombre del mazo (compatibilidad con nombres antiguos)
-            if(data.mazoName || data.deckName) {
+            if (data.mazoName || data.deckName) {
                 const mazoNameEl = document.getElementById('deck-name');
                 mazoNameEl.textContent = data.mazoName || data.deckName;
                 localStorage.setItem('gdmDeckName', data.mazoName || data.deckName); // Guardar en local
@@ -68,7 +234,13 @@ function importMazoFromJSON(event) {
 
             renderMazoList();
             renderPantheonInfo();
-            alert("Mazo importado correctamente ✅");
+
+            if (missing.length > 0) {
+                const sample = missing.slice(0, 10).join(', ');
+                alert(`Mazo importado parcialmente. No se pudieron mapear estas entradas: ${sample}${missing.length>10? ' ...': ''}`);
+            } else {
+                alert('Mazo importado correctamente ✅');
+            }
         } catch (err) {
             alert("Error al leer el archivo: " + err.message);
         }
@@ -97,14 +269,18 @@ function importMazoFromJSON(event) {
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadCards(CSV_FILE_PATH);
+            // Cargar cartas desde la base de datos (PHP)
+            loadCardsFromDatabase();
             // Añadir listener a la barra de búsqueda para filtrar instantáneamente
             document.getElementById('search-bar').addEventListener('input', applyFilters);
 
             // --- NUEVO: Cargar y Guardar Nombre del Mazo ---
             setupMazoNameEditor();
-        });
 
+            // === NUEVO: SISTEMAS DE GUARDADO EN BD ===
+            // Inicializar botón de guardado
+            setupSaveMazoButton();
+        });
         // --- FUNCIONES DE CARGA Y PARSEO ---
 
         async function fetchCSV(url) {
@@ -118,6 +294,92 @@ function importMazoFromJSON(event) {
             } catch (error) {
                 console.error('Error en fetchCSV:', error);
                 throw error;
+            }
+        }
+
+        // --- NUEVA: Cargar cartas desde backend PHP/MySQL ---
+        async function loadCardsFromDatabase() {
+            console.log('[loadCardsFromDatabase] Iniciando carga de cartas desde BD...');
+            const galleryGrid = document.getElementById('gallery-grid');
+            if (!galleryGrid) {
+                console.error('Error: No se encontró el elemento gallery-grid');
+                return;
+            }
+
+            galleryGrid.innerHTML = '<p>Cargando datos desde la base de datos...</p>';
+
+            try {
+                console.log('[loadCardsFromDatabase] Iniciando fetch a /The-Conjurer/fetch_cards.php');
+                const response = await fetch('/The-Conjurer/fetch_cards.php', { credentials: 'same-origin' });
+                console.log('[loadCardsFromDatabase] Response status:', response.status, response.statusText);
+                
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+
+                const raw = await response.text();
+                console.log('[loadCardsFromDatabase] Raw response length:', raw.length, 'bytes');
+                console.log('[loadCardsFromDatabase] First 200 chars:', raw.substring(0, 200));
+                
+                let data;
+                try { 
+                    data = JSON.parse(raw); 
+                    console.log('[loadCardsFromDatabase] JSON parsed successfully');
+                } catch (e) {
+                    console.error('[loadCardsFromDatabase] JSON parse failed:', e.message);
+                    throw new Error('Respuesta no es JSON: ' + raw.slice(0,500));
+                }
+
+                if (data.error) throw new Error(data.error);
+                if (!Array.isArray(data)) throw new Error('El servidor no devolvió un array de cartas');
+
+                allCardsData = data;
+                console.log('[loadCardsFromDatabase] Cartas cargadas:', allCardsData.length);
+
+                // Poblar filtros (mitología / era) si existen
+                const mythologyFilter = document.getElementById('mythology-filter');
+                if (mythologyFilter) {
+                    const prev = mythologyFilter.value;
+                    mythologyFilter.innerHTML = '';
+                    const defaultOpt = document.createElement('option');
+                    defaultOpt.value = '';
+                    defaultOpt.textContent = 'Toda Mitología';
+                    mythologyFilter.appendChild(defaultOpt);
+
+                    const mythologies = [...new Set(allCardsData.map(c => (c.Mitologia||'').toString().trim()).filter(Boolean))].sort();
+                    console.log('[loadCardsFromDatabase] Mitologías encontradas:', mythologies);
+                    mythologies.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m; opt.textContent = m; mythologyFilter.appendChild(opt);
+                    });
+                    if (prev) mythologyFilter.value = [...mythologyFilter.options].some(o=>o.value===prev)? prev : '';
+                }
+
+                const eraFilter = document.getElementById('era-filter');
+                if (eraFilter) {
+                    const prevE = eraFilter.value;
+                    eraFilter.innerHTML = '';
+                    const defaultEra = document.createElement('option');
+                    defaultEra.value = '';
+                    defaultEra.textContent = 'Toda Era';
+                    eraFilter.appendChild(defaultEra);
+
+                    const eras = [...new Set(allCardsData.map(c => (c.Era||'').toString().trim()).filter(Boolean))].sort();
+                    console.log('[loadCardsFromDatabase] Eras encontradas:', eras);
+                    eras.forEach(e => { const opt = document.createElement('option'); opt.value = e; opt.textContent = e; eraFilter.appendChild(opt); });
+                    if (prevE) eraFilter.value = [...eraFilter.options].some(o=>o.value===prevE)? prevE : '';
+                }
+
+                window.cardsImported = allCardsData;
+                console.log('[loadCardsFromDatabase] window.cardsImported set, llamando renderGallery()');
+                renderGallery();
+
+                // Si venimos de perfil editando, cargar mazo ahora que tenemos las cartas
+                const mazoId = sessionStorage.getItem('editingMazoId');
+                if (mazoId) await loadMazoFromDatabase();
+
+                console.log('[loadCardsFromDatabase] Completado exitosamente');
+            } catch (error) {
+                console.error('[loadCardsFromDatabase] Error:', error.message, error);
+                galleryGrid.innerHTML = `<p style="color:red;">Error al cargar cartas desde BD: ${error.message}</p>`;
             }
         }
 
@@ -292,6 +554,7 @@ function importMazoFromJSON(event) {
         }
 
         function renderGallery(filterTerm = '', filterType = '', filterMythology = '') {
+            console.log('[renderGallery] Iniciando renderizado con filtros:', { filterTerm, filterType, filterMythology });
             const galleryGrid = document.getElementById('gallery-grid');
             if (!galleryGrid) {
                 console.error('Error: No se encontró el elemento gallery-grid en renderGallery');
@@ -301,9 +564,12 @@ function importMazoFromJSON(event) {
             galleryGrid.innerHTML = ''; 
             
             if (!allCardsData || allCardsData.length === 0) {
+                console.warn('[renderGallery] No hay cartas cargadas. allCardsData:', allCardsData);
                 galleryGrid.innerHTML = '<p>No hay cartas cargadas. Verifica que el archivo CSV se haya cargado correctamente.</p>';
                 return;
             }
+            
+            console.log('[renderGallery] Total cartas disponibles:', allCardsData.length);
             
             const filteredCards = allCardsData.filter(card => {
                 // 1. Filtro de búsqueda con validación de campos
@@ -320,7 +586,10 @@ function importMazoFromJSON(event) {
                 return searchTermMatch && typeMatch && mythologyMatch;
             });
 
+            console.log('[renderGallery] Cartas después de filtrado:', filteredCards.length);
+
             if (filteredCards.length === 0) {
+                 console.warn('[renderGallery] Sin resultados después de aplicar filtros');
                  galleryGrid.innerHTML = '<p>No se encontraron cartas con esos filtros.</p>';
                  return;
             }
@@ -370,6 +639,8 @@ function importMazoFromJSON(event) {
 
                 galleryGrid.appendChild(container);
             });
+            
+            console.log('[renderGallery] Renderizado completado. Cartas mostradas:', filteredCards.length);
         }
         
         function applyFilters() {
@@ -483,7 +754,31 @@ function importMazoFromJSON(event) {
         // --- FUNCIONES DE LÓGICA DEL MAZO ---
 
         function getCardById(cardId) {
-            return allCardsData.find(c => c.ID === cardId);
+            if (!allCardsData || !Array.isArray(allCardsData)) return null;
+            return allCardsData.find(c => String(c.ID) === String(cardId));
+        }
+
+        // Detecta si una carta es única basándose en el campo 'Claves' de la BD
+        // Busca palabras clave: UNICO, UNICA, DIOS, DIOSA (tolerando acentos y puntuación)
+        function isCardUnique(card) {
+            if (!card || typeof card !== 'object') return false;
+            
+            // Obtener el valor del campo 'Claves'
+            const claves = card.Claves || card.claves || '';
+            if (!claves) return false;
+            
+            // Normalizar: eliminar acentos, convertir a mayúsculas
+            const normalized = String(claves)
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '') // Eliminar diacríticos
+                .toUpperCase();
+            
+            // Buscar palabras clave separadas por espacios, puntuación, etc.
+            // Reemplazar caracteres especiales por espacios para facilitar la búsqueda
+            const cleaned = normalized.replace(/[^A-Z0-9]+/g, ' ').trim();
+            
+            // Buscar palabras exactas usando límites de palabra
+            return /\b(UNICO|UNICA|DIOS|DIOSA)\b/.test(cleaned);
         }
         
         function getCurrentMazoCardDetails() {
@@ -495,16 +790,16 @@ function importMazoFromJSON(event) {
                 .filter(c => c !== null);
         }
 
-        function isCardUnique(card) {
-            return card.Claves.includes('ÚNICO') || card.Claves.includes('UNICO');
-        }
-
         function addCardToMazo(cardId) {
             const card = getCardById(cardId);
+            console.log('[addCardToMazo] Intento añadir carta ID:', cardId, 'card objeto:', card);
             if (!card) return;
 
             const currentCount = mazoCards[cardId] || 0;
+            console.log('[addCardToMazo] Estado antes añadir:', { currentCount, MAX_COPIES, currentPantheon });
+            // Evaluar si la carta es única basándose en el campo Claves
             const isUnique = isCardUnique(card);
+            console.log('[addCardToMazo] Carta:', card.Nombre, '| Claves:', card.Claves, '| isUnique:', isUnique);
             const isPantheon = card.Tipo === 'Panteón';
             const cardMazoType = getCardMazoType(card.Tipo);
 
@@ -629,14 +924,6 @@ function importMazoFromJSON(event) {
                 }
             });
 
-            // Validar Panteón
-            const validPantheon = panteonCount === 1;
-            updateValidationItem('valid-pantheon', validPantheon, `Panteón Seleccionado: ${validPantheon ? 'OK' : 'Falta 1'}`);
-
-            // Validar Tamaño Mazo de Dioses
-            const validGodSize = godMazoTotal >= MIN_GOD_MAZO;
-            updateValidationItem('valid-god-size', validGodSize, `Mazo de Dioses: ${godMazoTotal}/${MIN_GOD_MAZO}+`);
-            
             // Validar Tamaño Mazo de Designios
             const validDestinySize = destinyMazoTotal >= MIN_DESTINY_MAZO;
             updateValidationItem('valid-destiny-size', validDestinySize, `Mazo de Designios: ${destinyMazoTotal}/${MIN_DESTINY_MAZO}+`);
