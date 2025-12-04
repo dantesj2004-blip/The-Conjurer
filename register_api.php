@@ -19,7 +19,7 @@ $conexion->set_charset('utf8');
 
 $data = json_decode(file_get_contents('php://input'), true);
 
-if (!$data || !isset($data['nombre_usuario']) || !isset($data['email']) || !isset($data['password'])) {
+if (!$data || !isset($data['nombre_usuario']) || !isset($data['email']) || !isset($data['password']) || !isset($data['password_confirmation'])) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Datos incompletos']);
     exit;
@@ -28,37 +28,44 @@ if (!$data || !isset($data['nombre_usuario']) || !isset($data['email']) || !isse
 $nombre_usuario = $data['nombre_usuario'];
 $email = $data['email'];
 $password = $data['password'];
-$password_confirmacion = $data['password_confirmation'] ?? '';
+$password_confirmation = $data['password_confirmation']; // Usamos esta variable
 
-// Validaciones
-if (strlen($nombre_usuario) < 3) {
+// --- INICIO DE VALIDACIONES ADICIONALES DEL SERVIDOR ---
+
+// 1. VALIDACIÓN DE COINCIDENCIA DE CONTRASEÑAS (Ya existía, pero la reestructuramos)
+if ($password !== $password_confirmation) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'El nombre de usuario debe tener al menos 3 caracteres']);
+    echo json_encode(['success' => false, 'error' => 'Las contraseñas no coinciden.']);
     exit;
 }
 
-if (strlen($password) < 6) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'La contraseña debe tener al menos 6 caracteres']);
-    exit;
-}
-
-if ($password !== $password_confirmacion) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Las contraseñas no coinciden']);
-    exit;
-}
-
+// 2. VALIDACIÓN DE FORMATO DE EMAIL (NUEVO)
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Email inválido']);
+    echo json_encode(['success' => false, 'error' => 'El formato del email no es válido.']);
     exit;
 }
 
-// Hash de la contraseña
+// 3. VALIDACIÓN DE LONGITUD DE CONTRASEÑA (NUEVO)
+if (strlen($password) < 8) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'La contraseña debe tener al menos 8 caracteres.']);
+    exit;
+}
+
+// 4. VALIDACIÓN DE LONGITUD DE NOMBRE DE USUARIO (Mantenemos tu validación)
+if (strlen($nombre_usuario) < 3) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'El nombre de usuario debe tener al menos 3 caracteres.']);
+    exit;
+}
+// --- FIN DE VALIDACIONES ADICIONALES DEL SERVIDOR ---
+
+// Hash de la contraseña.
+// Nota: Usas SHA256, que es aceptable pero se recomienda 'password_hash' (PASSWORD_DEFAULT) para mayor seguridad.
 $password_hash = hash('sha256', $password);
 
-// Verificar si el usuario o email ya existen
+// 5. VALIDACIÓN DE UNICIDAD (Ya existía)
 $check_stmt = $conexion->prepare("SELECT id FROM usuarios WHERE nombre_usuario = ? OR email = ?");
 $check_stmt->bind_param("ss", $nombre_usuario, $email);
 $check_stmt->execute();
@@ -66,7 +73,7 @@ $check_resultado = $check_stmt->get_result();
 
 if ($check_resultado->num_rows > 0) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'El usuario o email ya está registrado']);
+    echo json_encode(['success' => false, 'error' => 'El usuario o email ya está registrado.']);
     $check_stmt->close();
     $conexion->close();
     exit;
@@ -92,8 +99,7 @@ if ($insert_stmt->execute()) {
         'user' => [
             'id' => $user_id,
             'nombre_usuario' => $nombre_usuario,
-            'email' => $email,
-            'es_admin' => false
+            'email' => $email
         ]
     ]);
 } else {

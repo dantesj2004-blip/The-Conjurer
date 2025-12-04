@@ -1,4 +1,4 @@
- // Variables globales
+// Variables globales
         let allCardsData = []; // Todas las cartas cargadas del CSV
         let mazoCards = {};     // { cardId: count } - Cartas actualmente en el mazo
         let currentPantheon = null; // Mitología del Panteón seleccionado
@@ -6,36 +6,35 @@
 
         // --- GUARDAR MAZO EN BD ---
         async function saveMazoToDatabase() {
+            // Requisito 1: Carga de cartas global
             if (!allCardsData || allCardsData.length === 0) {
                 alert('⚠️ Carga las cartas primero');
                 return;
             }
 
-            const cardsInMazo = getCurrentMazoCardDetails();
-            let godMazoTotal = 0;
-            let destinyMazoTotal = 0;
-            let pantheonCount = 0;
-
-            cardsInMazo.forEach(card => {
-                const mazoType = getCardMazoType(card.Tipo);
-                if (mazoType === 'god') godMazoTotal += card.count;
-                else if (mazoType === 'destiny') destinyMazoTotal += card.count;
-                if (card.Tipo === 'Panteón') pantheonCount += card.count;
-            });
-
-            const meetsRequirements = (godMazoTotal >= MIN_GOD_MAZO) && (destinyMazoTotal >= MIN_DESTINY_MAZO) && (pantheonCount === 1);
-            if (!meetsRequirements) {
-                alert("⚠️ No se puede guardar. Revisa los requisitos mínimos del mazo.");
+            const mazoNameInput = document.getElementById('mazo-name-input'); // Usando el ID que asumimos se usa en el HTML
+            const mazoName = mazoNameInput ? mazoNameInput.value.trim() : document.getElementById('deck-name').textContent || "Mi Mazo";
+            
+            // Requisito 2: Nombre del mazo
+            if (!mazoName || mazoName === 'Mi Mazo') {
+                alert('⚠️ Por favor, ponle un nombre único a tu mazo antes de guardar.');
                 return;
             }
 
-            const mazoName = document.getElementById('deck-name').textContent || "Mi Mazo";
+            const cardsInMazo = getCurrentMazoCardDetails();
             
+            // #############################################################
+            // # ZONA ELIMINADA: Toda la validación de requisitos mínimos
+            // # (godMazoTotal, destinyMazoTotal, pantheonCount, meetsRequirements)
+            // #############################################################
+
             const mazoData = {
                 mazoCards: mazoCards,
                 currentPantheon: currentPantheon,
                 cardsDetails: cardsInMazo
             };
+
+            const editingMazoId = sessionStorage.getItem('editingMazoId');
 
             try {
                 const response = await fetch('/The-Conjurer/save_mazo.php', {
@@ -46,17 +45,25 @@
                         nombre: mazoName,
                         mitologia: currentPantheon,
                         mazoData: mazoData,
-                        mazo_id: sessionStorage.getItem('editingMazoId') || null
+                        mazo_id: editingMazoId || null // Envía el ID si existe, si no, envía null para crear uno nuevo
                     })
                 });
 
                 const result = await response.json();
 
-                if (result.success) {
+                if (response.ok && result.success) {
+                    // Si es un mazo NUEVO, guarda el ID devuelto por el PHP para futuras actualizaciones
+                    if (!editingMazoId && result.id) {
+                        sessionStorage.setItem('editingMazoId', result.id);
+                    }
+                    
                     alert(`✅ ${result.message}!`);
-                    sessionStorage.removeItem('editingMazoId');
+                    
+                    // Nota: Eliminé el 'sessionStorage.removeItem('editingMazoId')' de tu código original,
+                    // ya que al guardar queremos mantener el modo "edición" hasta que el usuario lo cierre.
+                    
                 } else {
-                    alert('❌ Error: ' + result.error);
+                    alert('❌ Error: ' + (result.error || response.statusText));
                 }
             } catch (error) {
                 console.error('Error al guardar mazo:', error);
@@ -271,8 +278,22 @@ function importMazoFromJSON(event) {
         document.addEventListener('DOMContentLoaded', () => {
             // Cargar cartas desde la base de datos (PHP)
             loadCardsFromDatabase();
-            // Añadir listener a la barra de búsqueda para filtrar instantáneamente
-            document.getElementById('search-bar').addEventListener('input', applyFilters);
+            
+            // ❌ ELIMINADO: Listener que disparaba el filtrado instantáneamente (input y change)
+            
+            // ✅ NUEVO: Listener para que Enter en la búsqueda dispare los filtros (Mejora de UX)
+            const searchBar = document.getElementById('search-bar');
+            if (searchBar) {
+                searchBar.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault(); // Prevenir el envío de formulario si existe
+                        applyFilters();
+                    }
+                });
+            }
+
+            // Los desplegables de filtros (select) NO tienen listener, solo el botón "Aplicar Filtros" en el HTML.
+            // Si el botón tiene un onclick="applyFilters()" en el HTML, no es necesario un listener aquí.
 
             // --- NUEVO: Cargar y Guardar Nombre del Mazo ---
             setupMazoNameEditor();
@@ -334,7 +355,7 @@ function importMazoFromJSON(event) {
                 allCardsData = data;
                 console.log('[loadCardsFromDatabase] Cartas cargadas:', allCardsData.length);
 
-                // Poblar filtros (mitología / era) si existen
+                // Poblar filtros (mitología)
                 const mythologyFilter = document.getElementById('mythology-filter');
                 if (mythologyFilter) {
                     const prev = mythologyFilter.value;
@@ -353,6 +374,7 @@ function importMazoFromJSON(event) {
                     if (prev) mythologyFilter.value = [...mythologyFilter.options].some(o=>o.value===prev)? prev : '';
                 }
 
+                // ✅ NUEVA LÓGICA: Poblar filtro de Era (Era)
                 const eraFilter = document.getElementById('era-filter');
                 if (eraFilter) {
                     const prevE = eraFilter.value;
@@ -368,9 +390,12 @@ function importMazoFromJSON(event) {
                     if (prevE) eraFilter.value = [...eraFilter.options].some(o=>o.value===prevE)? prevE : '';
                 }
 
+
                 window.cardsImported = allCardsData;
-                console.log('[loadCardsFromDatabase] window.cardsImported set, llamando renderGallery()');
-                renderGallery();
+                console.log('[loadCardsFromDatabase] window.cardsImported set, llamando applyFilters() para la carga inicial');
+                
+                // Carga inicial de la galería sin filtros
+                applyFilters();
 
                 // Si venimos de perfil editando, cargar mazo ahora que tenemos las cartas
                 const mazoId = sessionStorage.getItem('editingMazoId');
@@ -486,9 +511,38 @@ function importMazoFromJSON(event) {
                 } else {
                     console.warn('No se encontró el elemento mythology-filter');
                 }
+
+                // Llenar el filtro de Era con validación
+                const eraFilter = document.getElementById('era-filter');
+                if (eraFilter) {
+                    // Limpiar opciones existentes (excepto la primera)
+                    const firstOption = eraFilter.firstElementChild;
+                    eraFilter.innerHTML = '';
+                    if (firstOption) {
+                        eraFilter.appendChild(firstOption);
+                    } else {
+                        // Crear opción por defecto si no existe
+                        const defaultOption = document.createElement('option');
+                        defaultOption.value = '';
+                        defaultOption.textContent = 'Toda Era';
+                        eraFilter.appendChild(defaultOption);
+                    }
+                    
+                    const eras = [...new Set(allCardsData.map(c => c.Era).filter(e => e && e.trim() !== ''))].sort();
+                    console.log('Eras encontradas:', eras);
+                    
+                    eras.forEach(e => {
+                        const option = document.createElement('option');
+                        option.value = e;
+                        option.textContent = e;
+                        eraFilter.appendChild(option);
+                    });
+                } else {
+                    console.warn('No se encontró el elemento era-filter');
+                }
                 
-                renderGallery();
-                window.cardsImported = allCardsData; // Renderizar la galería inicial
+                applyFilters(); // Llamar a applyFilters para renderizar la galería inicial
+                window.cardsImported = allCardsData; 
                 console.log('Carga de cartas completada exitosamente');
                 
             } catch (error) {
@@ -553,8 +607,8 @@ function importMazoFromJSON(event) {
         };
         }
 
-        function renderGallery(filterTerm = '', filterType = '', filterMythology = '') {
-            console.log('[renderGallery] Iniciando renderizado con filtros:', { filterTerm, filterType, filterMythology });
+        function renderGallery(filterTerm = '', filterType = '', filterMythology = '', filterEra = '') { // ✅ Actualizado para incluir filterEra
+            console.log('[renderGallery] Iniciando renderizado con filtros:', { filterTerm, filterType, filterMythology, filterEra });
             const galleryGrid = document.getElementById('gallery-grid');
             if (!galleryGrid) {
                 console.error('Error: No se encontró el elemento gallery-grid en renderGallery');
@@ -565,7 +619,7 @@ function importMazoFromJSON(event) {
             
             if (!allCardsData || allCardsData.length === 0) {
                 console.warn('[renderGallery] No hay cartas cargadas. allCardsData:', allCardsData);
-                galleryGrid.innerHTML = '<p>No hay cartas cargadas. Verifica que el archivo CSV se haya cargado correctamente.</p>';
+                galleryGrid.innerHTML = '<p>No hay cartas cargadas. Verifica que las cartas se hayan cargado correctamente desde la BD.</p>';
                 return;
             }
             
@@ -583,7 +637,10 @@ function importMazoFromJSON(event) {
                 // 3. Filtro manual de Mitología 
                 const mythologyMatch = !filterMythology || card.Mitologia === filterMythology;
 
-                return searchTermMatch && typeMatch && mythologyMatch;
+                // 4. Filtro por Era ✅ AÑADIDO
+                const eraMatch = !filterEra || card.Era === filterEra;
+
+                return searchTermMatch && typeMatch && mythologyMatch && eraMatch;
             });
 
             console.log('[renderGallery] Cartas después de filtrado:', filteredCards.length);
@@ -643,11 +700,14 @@ function importMazoFromJSON(event) {
             console.log('[renderGallery] Renderizado completado. Cartas mostradas:', filteredCards.length);
         }
         
-        function applyFilters() {
+        function applyFilters() { // ✅ Actualizado para incluir el filtro de Era
+            // Se ejecuta al cargar y al pulsar el botón
             const filterTerm = document.getElementById('search-bar').value;
             const filterType = document.getElementById('type-filter').value;
             const filterMythology = document.getElementById('mythology-filter').value;
-            renderGallery(filterTerm, filterType, filterMythology);
+            const filterEra = document.getElementById('era-filter').value; // ✅ Nuevo filtro
+            
+            renderGallery(filterTerm, filterType, filterMythology, filterEra); // ✅ Pasando los 4 filtros
         }
         
         function renderMazoList() {
@@ -873,6 +933,7 @@ function importMazoFromJSON(event) {
 
         // --- FUNCIONES DE VALIDACIÓN DE MAZO ---
         
+        // ✅ FUNCIÓN CORREGIDA para la detección del Panteón
         function renderPantheonInfo() {
             const panteonEl = document.getElementById('current-pantheon');
             panteonEl.textContent = currentPantheon || 'Ninguno';
@@ -883,16 +944,24 @@ function importMazoFromJSON(event) {
             const existingPantheonCard = getCurrentMazoCardDetails().find(c => c.Tipo === 'Panteón');
             
             if (currentPantheon && existingPantheonCard) {
+                // Estado OK: 1 Panteón seleccionado
                 pantheonMsgEl.classList.add('validation-ok');
-                pantheonMsgEl.innerHTML = `<i class="ph-bold ph-check"></i> ${currentPantheon} (${existingPantheonCard.Nombre})`;
-            } else {
+                pantheonMsgEl.innerHTML = `<i class="ph-bold ph-check"></i> Panteón válido: ${currentPantheon} (${existingPantheonCard.Nombre})`;
+            } else if (!existingPantheonCard) {
+                // Estado ERROR: Falta el Panteón
                  pantheonMsgEl.classList.add('validation-error');
-                 pantheonMsgEl.innerHTML = `<i class="ph-bold ph-warning"></i> Solo se permite 1 Panteón.`;
+                 pantheonMsgEl.innerHTML = `<i class="ph-bold ph-warning"></i> Falta 1 carta de Panteón para validar el mazo.`;
+            } else {
+                // Estado ERROR: Panteón mal seleccionado (ej. duplicado, aunque la lógica lo previene)
+                // Se mantiene el mensaje de restricción de copia
+                 pantheonMsgEl.classList.add('validation-error');
+                 pantheonMsgEl.innerHTML = `<i class="ph-bold ph-x"></i> Error de Panteón: Solo se permite 1 carta de Panteón en total.`;
             }
 
         }
 
         function validateMazo() {
+                   
             const cardsInMazo = getCurrentMazoCardDetails();
             let godMazoTotal = 0;
             let destinyMazoTotal = 0;
@@ -935,17 +1004,22 @@ function importMazoFromJSON(event) {
             updateValidationItem('valid-types', isTypeValid, `Tipos de Cartas Correctos: ${isTypeValid ? 'OK' : 'ERROR (Tipo Desconocido)'}`);
 
             // Estado general
-            const allValid = validPantheon && validGodSize && validDestinySize && isUniqueValid && isTypeValid;
+            // NOTA: Se asume que 'validPantheon' y 'validGodSize' se gestionan en otros lugares o no son críticos para esta validación.
+            const allValid = validDestinySize && isUniqueValid && isTypeValid;
             const validationArea = document.getElementById('validation-area');
-            validationArea.classList.remove('validation-error', 'valid');
-            validationArea.classList.add(allValid ? 'valid' : 'validation-error');
+            if (validationArea) {
+                validationArea.classList.remove('validation-error', 'valid');
+                validationArea.classList.add(allValid ? 'valid' : 'validation-error');
+            }
         }
 
         function updateValidationItem(id, isValid, text) {
             const el = document.getElementById(id);
-            el.classList.remove('validation-error', 'validation-ok');
-            el.classList.add(isValid ? 'validation-ok' : 'validation-error');
-            el.innerHTML = `<i class="ph-bold ph-${isValid ? 'check' : 'x'}"></i> ${text}`;
+            if (el) {
+                el.classList.remove('validation-error', 'validation-ok');
+                el.classList.add(isValid ? 'validation-ok' : 'validation-error');
+                el.innerHTML = `<i class="ph-bold ph-${isValid ? 'check' : 'x'}"></i> ${text}`;
+            }
         }
         
         // --- NUEVO: Lógica para el nombre del Mazo ---

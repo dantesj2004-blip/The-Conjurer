@@ -391,7 +391,7 @@
         <nav class="main-nav">
             <a href="index.html">INICIO</a>
             <a href="Galeria.html">GALERÍA</a>
-            <a href="deckbuilder.html">DECKBUILDER</a>
+            <a href="deckbuilder.html" id="deckbuilder-nav-link">DECKBUILDER</a>
             <a href="reglas.html">REGLAS</a>
             <a href="noticias.html">NOTICIAS</a>
             <a href="perfil.html" class="active">MI PERFIL</a>
@@ -411,7 +411,7 @@
         <div id="errorMessage" class="message error"></div>
 
         <div class="mazos-section">
-            <h3 class="section-title">📚 Mis Mazos</h3>
+            <h3 class="section-title">Mis Mazos</h3>
             
             <div id="mazosContainer" class="mazos-grid">
                 </div>
@@ -536,6 +536,16 @@
                 if (session.es_admin) {
                     document.getElementById('adminSection').classList.remove('hidden');
                 }
+                
+                // INICIO DE SOLUCIÓN: Limpiar sessionStorage al usar el enlace de navegación principal
+                const deckbuilderLink = document.getElementById('deckbuilder-nav-link');
+                if (deckbuilderLink) {
+                    deckbuilderLink.addEventListener('click', function() {
+                        sessionStorage.removeItem('editingMazoId');
+                    });
+                }
+                // FIN DE SOLUCIÓN
+                
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('errorMessage').textContent = 'Error al cargar el perfil: ' + error.message;
@@ -908,6 +918,21 @@
                 console.error('Error al cerrar sesión:', error);
             }
         }
+
+         // Verificar sesión
+        window.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/The-Conjurer/check_session.php', { credentials: 'same-origin' });
+                const session = await response.json();
+                if (session.logged_in) {
+                    document.querySelector('.btn-register').style.display = 'none';
+                    document.querySelector('.btn-login').style.display = 'none';
+                    document.getElementById('userButton').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
     </script>
 </body>
 </html>
