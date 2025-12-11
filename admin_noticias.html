@@ -386,7 +386,7 @@
             const es_destacada = document.getElementById('es_destacada').checked ? 1 : 0;
 
             try {
-                const response = await fetch('/The-Conjurer/add_noticia.php', {
+                const response = await fetch('add_noticia.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -427,7 +427,7 @@
 
         async function loadNewsList() {
             try {
-                const response = await fetch('/The-Conjurer/fetch_noticias.php');
+                const response = await fetch('fetch_noticias.php');
                 const noticias = await response.json();
 
                 const tbody = document.getElementById('newsTableBody');
@@ -470,7 +470,7 @@
         async function deleteNoticia(id) {
             if (confirm('¿Estás seguro de que deseas eliminar esta noticia?')) {
                 try {
-                    const response = await fetch('/The-Conjurer/delete_noticia.php', {
+                    const response = await fetch('delete_noticia.php', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

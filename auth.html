@@ -348,7 +348,7 @@
             const messageDiv = document.getElementById('loginMessage');
 
             try {
-                const response = await fetch('/The-Conjurer/login_api.php', {
+                const response = await fetch('login_api.php', {
                     method: 'POST',
                     credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json' },
@@ -404,7 +404,7 @@
             }
 
             try {
-                const response = await fetch('/The-Conjurer/register_api.php', {
+                const response = await fetch('register_api.php', {
                     method: 'POST',
                     credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json' },

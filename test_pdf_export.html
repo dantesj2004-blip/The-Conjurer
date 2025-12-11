@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Exportador PDF</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 600px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .info {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 4px;
+            color: #555;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+        }
+        
+        .test-section h2 {
+            font-size: 1.1rem;
+            color: #667eea;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .btn-test {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-test:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-test:active {
+            transform: translateY(0);
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .card-preview {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .card {
+            background: #f9f9f9;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            aspect-ratio: 88.9 / 127;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 0.8rem;
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test - Exportador PDF MTG</h1>
+        
+        <div class="info">
+            ℹ️ Esta página prueba la funcionalidad de exportación a PDF con cartas de tamaño MTG estándar (88.9mm × 127mm)
+        </div>
+        
+        <!-- Test 1: Verificar jsPDF -->
+        <div class="test-section">
+            <h2>✓ Test 1: Verificar jsPDF</h2>
+            <button class="btn-test" onclick="testjsPDF()">Verificar jsPDF</button>
+            <div id="test1-result"></div>
+        </div>
+        
+        <!-- Test 2: Verificar export-pdf.js -->
+        <div class="test-section">
+            <h2>✓ Test 2: Verificar export-pdf.js</h2>
+            <button class="btn-test" onclick="testExportPDF()">Verificar export-pdf.js</button>
+            <div id="test2-result"></div>
+        </div>
+        
+        <!-- Test 3: Generar PDF simple -->
+        <div class="test-section">
+            <h2>✓ Test 3: Generar PDF de Prueba</h2>
+            <p style="margin-bottom: 15px; color: #666;">Se generará un PDF con 6 cartas de prueba</p>
+            <button class="btn-test" onclick="generateTestPDF()">Generar PDF</button>
+            <div id="test3-result"></div>
+        </div>
+        
+        <!-- Preview de cartas -->
+        <div class="test-section">
+            <h2>📇 Vista Previa - Tamaño de Cartas MTG</h2>
+            <p style="margin-bottom: 15px; color: #666;">Las siguientes tarjetas muestran la proporción 88.9mm × 127mm</p>
+            <div class="card-preview">
+                <div class="card">Carta 1</div>
+                <div class="card">Carta 2</div>
+                <div class="card">Carta 3</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cargar librerías -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="export-pdf.js"></script>
+    
+    <script>
+        function updateStatus(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        // Test 1: Verificar jsPDF
+        function testjsPDF() {
+            updateStatus('test1-result', '⏳ Verificando...', 'info');
+            
+            setTimeout(() => {
+                try {
+                    if (typeof window.jspdf === 'undefined') {
+                        updateStatus('test1-result', '❌ jsPDF no está cargado', 'error');
+                        return;
+                    }
+                    
+                    if (typeof window.jspdf.jsPDF === 'undefined') {
+                        updateStatus('test1-result', '❌ window.jspdf.jsPDF no está disponible', 'error');
+                        return;
+                    }
+                    
+                    const { jsPDF } = window.jspdf;
+                    updateStatus('test1-result', `✅ jsPDF v${jsPDF.version || 'desconocida'} cargado correctamente en <code>window.jspdf.jsPDF</code>`, 'success');
+                } catch (error) {
+                    updateStatus('test1-result', `❌ Error: ${error.message}`, 'error');
+                }
+            }, 500);
+        }
+        
+        // Test 2: Verificar export-pdf.js
+        function testExportPDF() {
+            updateStatus('test2-result', '⏳ Verificando...', 'info');
+            
+            setTimeout(() => {
+                try {
+                    if (typeof exportDeckToPDF === 'undefined') {
+                        updateStatus('test2-result', '❌ export-pdf.js no está cargado', 'error');
+                        return;
+                    }
+                    
+                    if (typeof exportDeckToPDF !== 'function') {
+                        updateStatus('test2-result', '❌ exportDeckToPDF no es una función', 'error');
+                        return;
+                    }
+                    
+                    updateStatus('test2-result', '✅ <code>exportDeckToPDF()</code> está disponible y lista para usar', 'success');
+                } catch (error) {
+                    updateStatus('test2-result', `❌ Error: ${error.message}`, 'error');
+                }
+            }, 500);
+        }
+        
+        // Test 3: Generar PDF
+        async function generateTestPDF() {
+            updateStatus('test3-result', '⏳ Generando PDF...', 'info');
+            
+            try {
+                // Crear datos de prueba
+                const testCards = [
+                    { id: 1, nombre: 'Odin', tipo: 'Personaje', mitologia: 'Nordico', imagen: '', cantidad: 1 },
+                    { id: 2, nombre: 'Zeus', tipo: 'Panteón', mitologia: 'Griego', imagen: '', cantidad: 2 },
+                    { id: 3, nombre: 'Ra', tipo: 'Personaje', mitologia: 'Egipcio', imagen: '', cantidad: 1 },
+                    { id: 4, nombre: 'Evento de Batalla', tipo: 'Evento', mitologia: 'Neutral', imagen: '', cantidad: 3 },
+                    { id: 5, nombre: 'Espada Mágica', tipo: 'Equipo', mitologia: 'Neutral', imagen: '', cantidad: 1 },
+                    { id: 6, nombre: 'Invocación Poderosa', tipo: 'Invocación', mitologia: 'Azteca', imagen: '', cantidad: 2 }
+                ];
+                
+                const resultado = await exportDeckToPDF(testCards, 'Mazo de Prueba');
+                
+                if (resultado) {
+                    updateStatus('test3-result', '✅ PDF generado y descargado correctamente como "Mazo_de_Prueba_[fecha].pdf"', 'success');
+                } else {
+                    updateStatus('test3-result', '❌ Error al generar el PDF', 'error');
+                }
+            } catch (error) {
+                updateStatus('test3-result', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Ejecutar test 1 automáticamente al cargar
+        window.addEventListener('load', () => {
+            setTimeout(testjsPDF, 100);
+        });
+    </script>
+</body>
+</html>

@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="GaleriaCSS.css">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="export-pdf.js"></script>
 
     <style>
         /* Estilos adicionales para perfil */
@@ -197,10 +199,12 @@
             gap: 10px;
             position: relative;
             z-index: 1;
+            flex-wrap: wrap;
         }
 
         .mazo-btn {
             flex: 1;
+            min-width: 80px;
             padding: 8px 12px;
             border: 1px solid var(--secondary-green);
             background: transparent;
@@ -211,6 +215,7 @@
             font-weight: 700;
             text-transform: uppercase;
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
 
         .mazo-btn:hover {
@@ -512,7 +517,7 @@
         // Verificar sesión al cargar
         window.addEventListener('DOMContentLoaded', async function() {
             try {
-                const response = await fetch('/The-Conjurer/check_session.php', { credentials: 'same-origin' });
+                const response = await fetch('check_session.php', { credentials: 'same-origin' });
                 const session = await response.json();
 
                 if (!session.logged_in) {
@@ -523,8 +528,52 @@
                 document.getElementById('userName').textContent = session.nombre_usuario || 'Usuario';
                 document.getElementById('userEmail').textContent = session.email || 'email@ejemplo.com';
                 
-                const diasDesdeRegistro = Math.floor(Math.random() * 30) + 1; // Simulación
-                document.getElementById('userDate').textContent = `Miembro desde hace ${diasDesdeRegistro} días`;
+                // Mostrar días reales desde la fecha de registro
+                (async () => {
+                    try {
+                        // Buscar claves posibles dentro del objeto session
+                        const possibleKeys = ['fecha_registro', 'fecha_registro_iso', 'registered_at', 'created_at', 'fecha_creacion', 'registro', 'created', 'registro_fecha', 'registration_date'];
+                        let regDate = null;
+                        for (const k of possibleKeys) {
+                            if (session[k]) { regDate = session[k]; break; }
+                        }
+
+                        // Fallback: pedir al servidor si no viene en session
+                        if (!regDate) {
+                            try {
+                                const r = await fetch('get_user_info.php', { credentials: 'same-origin' });
+                                if (r.ok) {
+                                    const info = await r.json();
+                                    regDate = info.fecha_registro || info.registered_at || info.created_at || info.registration_date || null;
+                                }
+                            } catch (e) {
+                                // No hacer ruido; manejamos abajo
+                                console.warn('Fallback get_user_info failed:', e);
+                            }
+                        }
+
+                        if (regDate) {
+                            let d = new Date(regDate);
+                            if (isNaN(d)) {
+                                const n = Number(regDate);
+                                if (!isNaN(n)) d = new Date(n);
+                            }
+
+                            if (!isNaN(d)) {
+                                const dias = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+                                const fechaStr = d.toLocaleDateString('es-ES');
+                                document.getElementById('userDate').textContent = `Miembro desde hace ${dias} días (desde ${fechaStr})`;
+                            } else {
+                                document.getElementById('userDate').textContent = 'Miembro desde (fecha no disponible)';
+                            }
+                        } else {
+                            document.getElementById('userDate').textContent = 'Miembro desde (fecha no disponible)';
+                        }
+                    } catch (err) {
+                        console.warn('No se pudo obtener fecha de registro:', err);
+                        document.getElementById('userDate').textContent = 'Miembro desde (fecha no disponible)';
+                    }
+                })();
 
                 loadMazos();
 
@@ -554,7 +603,7 @@
             container.innerHTML = '<p style="text-align: center; color: #aaa;">Cargando mazos...</p>';
 
             try {
-                const response = await fetch('/The-Conjurer/get_mazos.php', { credentials: 'same-origin' });
+                const response = await fetch('get_mazos.php', { credentials: 'same-origin' });
                 const result = await response.json();
 
                 if (!response.ok || result.error) {
@@ -595,6 +644,7 @@
                         <div class="mazo-actions">
                             <button class="mazo-btn primary" onclick="verDetalleMazo(${mazo.id})">Ver</button>
                             <button class="mazo-btn" onclick="editarMazo(${mazo.id})">Editar</button>
+                            <button class="mazo-btn" onclick="exportarMazoPDF(${mazo.id}, '${mazo.nombre.replace(/'/g, "\\'")}')">📄 PDF</button>
                             <button class="mazo-btn" style="border-color: #ff8787; color: #ff8787;" onclick="eliminarMazo(${mazo.id})">Eliminar</button>
                         </div>
                     `;
@@ -620,7 +670,7 @@
                 return;
             }
             try {
-                const response = await fetch('/The-Conjurer/delete_mazo.php', {
+                const response = await fetch('delete_mazo.php', {
                     method: 'POST',
                     credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json' },
@@ -638,6 +688,73 @@
                 alert('❌ Error al eliminar: ' + error.message);
             }
         }
+
+        /**
+         * Exporta un mazo guardado a PDF
+         * @param {number} mazoId - ID del mazo a exportar
+         * @param {string} mazoName - Nombre del mazo
+         */
+        async function exportarMazoPDF(mazoId, mazoName) {
+    try {
+        if (!allUserMazos || allUserMazos.length === 0) {
+            alert('❌ No se encontraron mazos');
+            return;
+        }
+
+        const mazo = allUserMazos.find(m => m.id === mazoId);
+        if (!mazo) {
+            alert('❌ Mazo no encontrado');
+            return;
+        }
+
+        const mazoData = mazo.mazo_data;
+        const cardsDetails = mazoData.cardsDetails || [];
+        const mazoCards = mazoData.mazoCards || {};
+
+        if (cardsDetails.length === 0) {
+            alert('⚠️ Este mazo no tiene cartas');
+            return;
+        }
+
+        // Preparar datos para el PDF
+        const deckCards = cardsDetails.map(card => {
+            const count = mazoCards[card.ID] || 1;
+            // Asegurar URL de imagen correcta
+            let imageUrl = card['URL-IMG'] || card.imagen_url || '';
+            if (!imageUrl || imageUrl === 'placeholder_card.jpg') {
+                imageUrl = `GDM/${card.Mitología || 'Neutrales'}/${card.Tipo || 'Panteón'}/${card.Nombre.replace(/\s+/g, '_')}.jpg`;
+            }
+            
+            return {
+                nombre: card.Nombre,
+                imagen: imageUrl,
+                cantidad: count,
+                tipo: card.Tipo,
+                mitologia: card.Mitología
+            };
+        });
+
+        // Mostrar mensaje de progreso
+        const progressMsg = document.createElement('div');
+        progressMsg.innerHTML = '⏳ Generando PDF... No cierres la ventana';
+        progressMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#3b0066;color:#fff;padding:20px;border-radius:8px;z-index:9999;';
+        document.body.appendChild(progressMsg);
+
+        // Generar PDF
+        const resultado = await exportDeckToPDF(deckCards, mazoName);
+        
+        // Limpiar mensaje
+        document.body.removeChild(progressMsg);
+
+        if (resultado) {
+            console.log(`✅ PDF exportado: ${mazoName}`);
+        }
+
+    } catch (error) {
+        console.error('Error exportando PDF:', error);
+        alert('❌ Error al exportar: ' + error.message);
+    }
+}
 
         function abrirModalDetalleMazo(mazoId) {
             const mazo = allUserMazos.find(m => m.id === mazoId);
@@ -907,7 +1024,7 @@
 
         async function logout() {
             try {
-                await fetch('/The-Conjurer/logout_api.php', { method: 'POST', credentials: 'same-origin' });
+                await fetch('logout_api.php', { method: 'POST', credentials: 'same-origin' });
                 window.location.href = 'index.html';
             } catch (error) {
                 console.error('Error al cerrar sesión:', error);
@@ -917,12 +1034,16 @@
          // Verificar sesión
         window.addEventListener('DOMContentLoaded', async function() {
             try {
-                const response = await fetch('/The-Conjurer/check_session.php', { credentials: 'same-origin' });
+                const response = await fetch('check_session.php', { credentials: 'same-origin' });
                 const session = await response.json();
                 if (session.logged_in) {
-                    document.querySelector('.btn-register').style.display = 'none';
-                    document.querySelector('.btn-login').style.display = 'none';
-                    document.getElementById('userButton').style.display = 'block';
+                    const btnRegister = document.querySelector('.btn-register');
+                    const btnLogin = document.querySelector('.btn-login');
+                    const userButton = document.getElementById('userButton');
+                    
+                    if (btnRegister) btnRegister.style.display = 'none';
+                    if (btnLogin) btnLogin.style.display = 'none';
+                    if (userButton) userButton.style.display = 'block';
                 }
             } catch (error) {
                 console.error('Error:', error);

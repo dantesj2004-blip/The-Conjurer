@@ -37,7 +37,7 @@
             const editingMazoId = sessionStorage.getItem('editingMazoId');
 
             try {
-                const response = await fetch('/The-Conjurer/save_mazo.php', {
+                const response = await fetch('save_mazo.php', {
                     method: 'POST',
                     credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json' },
@@ -77,7 +77,7 @@
             if (!mazoId || !allCardsData || allCardsData.length === 0) return;
 
             try {
-                const response = await fetch('/The-Conjurer/get_mazos.php', { credentials: 'same-origin' });
+                const response = await fetch('get_mazos.php', { credentials: 'same-origin' });
                 const result = await response.json();
                 const mazo = result.mazos.find(m => m.id === parseInt(mazoId));
 
@@ -330,8 +330,8 @@ function importMazoFromJSON(event) {
             galleryGrid.innerHTML = '<p>Cargando datos desde la base de datos...</p>';
 
             try {
-                console.log('[loadCardsFromDatabase] Iniciando fetch a /The-Conjurer/fetch_cards.php');
-                const response = await fetch('/The-Conjurer/fetch_cards.php', { credentials: 'same-origin' });
+                console.log('[loadCardsFromDatabase] Iniciando fetch a fetch_cards.php');
+                const response = await fetch('fetch_cards.php', { credentials: 'same-origin' });
                 console.log('[loadCardsFromDatabase] Response status:', response.status, response.statusText);
                 
                 if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -1363,3 +1363,143 @@ async function exportMazoToTTS() {
                 exportTTSBtn.addEventListener('click', exportMazoToTTSImproved);
             }
         });
+
+    async function exportCurrentDeckPDF() {
+    try {
+        // Validar que haya cartas cargadas
+        if (!allCardsData || allCardsData.length === 0) {
+            alert('⚠️ Por favor, espera a que las cartas se carguen completamente');
+            return;
+        }
+
+        // Validar que el mazo no esté vacío
+        if (!mazoCards || Object.keys(mazoCards).length === 0) {
+            alert('⚠️ Tu mazo está vacío. Añade cartas antes de exportar.');
+            return;
+        }
+
+        // Obtener nombre del mazo
+        const mazoNameElement = document.getElementById('deck-name');
+        const mazoName = mazoNameElement ? mazoNameElement.textContent.trim() : 'Mi Mazo';
+
+        // Preparar datos para el PDF
+        const deckCards = [];
+        for (const [cardId, cantidad] of Object.entries(mazoCards)) {
+            // Buscar la carta en allCardsData
+            const card = allCardsData.find(c => String(c.ID) === String(cardId));
+            
+            if (card) {
+                // Obtener URL de imagen (prioridad al CSV/BD)
+                let imageUrl = card['URL-IMG'] || card.imagen_url || '';
+                
+                // Fallback si no hay imagen
+                if (!imageUrl || imageUrl.includes('placeholder')) {
+                    const mitologia = (card.Mitologia || 'Neutrales').replace(/\s+/g, '_');
+                    const tipo = (card.Tipo || 'Panteón').replace(/\s+/g, '');
+                    const nombre = (card.Nombre || 'carta').replace(/\s+/g, '_');
+                    imageUrl = `GDM/${mitologia}/${tipo}/${nombre}.jpg`;
+                }
+
+                deckCards.push({
+                    nombre: card.Nombre,
+                    imagen: imageUrl,
+                    cantidad: cantidad,
+                    tipo: card.Tipo,
+                    mitologia: card.Mitologia
+                });
+            }
+        }
+
+        if (deckCards.length === 0) {
+            alert('⚠️ No se pudieron procesar las cartas del mazo');
+            return;
+        }
+
+        // Mostrar mensaje de progreso
+        const progressMsg = document.createElement('div');
+        progressMsg.innerHTML = '⏳ Generando PDF... No cierres la ventana';
+        progressMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#3b0066;color:#fff;padding:20px;border-radius:8px;z-index:9999;';
+        document.body.appendChild(progressMsg);
+
+        // Generar PDF
+        const resultado = await exportDeckToPDF(deckCards, mazoName);
+        
+        // Limpiar mensaje
+        document.body.removeChild(progressMsg);
+
+        if (resultado) {
+            console.log(`✅ PDF exportado: ${mazoName}`);
+            alert('✅ PDF descargado correctamente');
+        }
+
+    } catch (error) {
+        console.error('Error al exportar PDF:', error);
+        alert('❌ Error al exportar: ' + error.message);
+    }
+}
+
+// === EXPORTACIÓN A PDF DESDE PERFIL (NO BORRAR) ===
+/**
+ * Exporta un mazo guardado a PDF (usado desde perfil.html)
+ */
+async function exportarMazoPDF(mazoId, mazoName) {
+    try {
+        if (!allUserMazos || allUserMazos.length === 0) {
+            alert('❌ No se encontraron mazos');
+            return;
+        }
+
+        const mazo = allUserMazos.find(m => m.id === mazoId);
+        if (!mazo) {
+            alert('❌ Mazo no encontrado');
+            return;
+        }
+
+        const mazoData = mazo.mazo_data;
+        const cardsDetails = mazoData.cardsDetails || [];
+        const mazoCards = mazoData.mazoCards || {};
+
+        if (cardsDetails.length === 0) {
+            alert('⚠️ Este mazo no tiene cartas');
+            return;
+        }
+
+        // Preparar datos para el PDF
+        const deckCards = cardsDetails.map(card => {
+            const count = mazoCards[card.ID] || 1;
+            // Asegurar URL de imagen correcta
+            let imageUrl = card['URL-IMG'] || card.imagen_url || '';
+            if (!imageUrl || imageUrl === 'placeholder_card.jpg') {
+                imageUrl = `GDM/${card.Mitología || 'Neutrales'}/${card.Tipo || 'Panteón'}/${card.Nombre.replace(/\s+/g, '_')}.jpg`;
+            }
+            
+            return {
+                nombre: card.Nombre,
+                imagen: imageUrl,
+                cantidad: count,
+                tipo: card.Tipo,
+                mitologia: card.Mitología
+            };
+        });
+
+        // Mostrar mensaje de progreso
+        const progressMsg = document.createElement('div');
+        progressMsg.innerHTML = '⏳ Generando PDF... No cierres la ventana';
+        progressMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#3b0066;color:#fff;padding:20px;border-radius:8px;z-index:9999;';
+        document.body.appendChild(progressMsg);
+
+        // Generar PDF
+        const resultado = await exportDeckToPDF(deckCards, mazoName);
+        
+        // Limpiar mensaje
+        document.body.removeChild(progressMsg);
+
+        if (resultado) {
+            console.log(`✅ PDF exportado: ${mazoName}`);
+        }
+
+    } catch (error) {
+        console.error('Error exportando PDF:', error);
+        alert('❌ Error al exportar: ' + error.message);
+    }
+}

@@ -38,7 +38,7 @@ if ($conexion->connect_error) {
 
 $conexion->set_charset('utf8');
 
-$stmt = $conexion->prepare('SELECT id, nombre_usuario, email, es_admin FROM usuarios WHERE id = ?');
+$stmt = $conexion->prepare('SELECT id, nombre_usuario, email, es_admin, fecha_registro, ultima_conexion FROM usuarios WHERE id = ?');
 $stmt->bind_param('i', $uid);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -50,7 +50,9 @@ if ($result && $result->num_rows > 0) {
         'user_id' => (int)$usuarioRow['id'],
         'nombre_usuario' => $usuarioRow['nombre_usuario'],
         'email' => $usuarioRow['email'],
-        'es_admin' => (bool)$usuarioRow['es_admin']
+        'es_admin' => (bool)$usuarioRow['es_admin'],
+        'fecha_registro' => $usuarioRow['fecha_registro'],
+        'ultima_conexion' => $usuarioRow['ultima_conexion']
     ]);
 } else {
     // Usuario no existe -> limpiar sesión y cookie

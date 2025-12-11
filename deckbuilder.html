@@ -9,7 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&amp;display=swap" rel="stylesheet"/>
 <link href="GaleriaCSS.css"  rel="stylesheet"/> 
 <link rel="stylesheet" href="deckbuilder.css"/> 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://unpkg.com/phosphor-icons"></script>
+<script src="export-pdf.js"></script>
 <style>
       
     </style> 
@@ -78,6 +80,7 @@
 
 <div class="deck-actions">
 <button class="btn-auth" id="export-tts-btn" title="Genera una decksheet de 10x7 (2500x2450px) optimizada para TTS">Exportar TTS Decksheet</button>
+<button class="btn-auth" id="export-pdf-btn" title="Exporta el deck a PDF con cartas de tamaño MTG" onclick="exportCurrentDeckPDF()">Exportar PDF</button>
 <button class="btn-auth" onclick="exportMazoToJSON()">Exportar Mazo</button>
 <input accept=".json" id="importMazoFile" onchange="importMazoFromJSON(event)" style="display:none" type="file"/>
 <button class="btn-auth" onclick="document.getElementById('importMazoFile').click()">Importar Mazo</button>
@@ -87,7 +90,7 @@
 <div id="god-deck-cards">
 <p class="placeholder">Añade Panteón, Personajes, Recursos, Eventos aquí.</p>
 </div>
-        <button class="btn-auth" id="save-mazo-btn" title="Guarda tu mazo en tu cuenta">💾 Guardar Mazo</button>
+        <button class="btn-auth" id="save-mazo-btn" title="Guarda tu mazo en tu cuenta">Guardar Mazo</button>
     </div>
 <div class="deck-section" id="destiny-deck">
 <h3>Mazo de Designios (<span id="destiny-deck-count">0</span>/30+)</h3>
@@ -100,12 +103,13 @@
 </div>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="export-pdf.js"></script>
 <script src="deckbuilder.js"></script>
 <script>
     // Verificar sesión después de que deckbuilder.js esté cargado
     (async function() {
         try {
-            const response = await fetch('/The-Conjurer/check_session.php', { credentials: 'same-origin' });
+            const response = await fetch('check_session.php', { credentials: 'same-origin' });
             const session = await response.json();
             if (session.logged_in) {
                 document.querySelector('.btn-register').style.display = 'none';

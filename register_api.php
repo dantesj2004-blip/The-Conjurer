@@ -92,6 +92,7 @@ if ($insert_stmt->execute()) {
     $_SESSION['nombre_usuario'] = $nombre_usuario;
     $_SESSION['email'] = $email;
     $_SESSION['es_admin'] = false;
+    $_SESSION['fecha_registro'] = date('Y-m-d H:i:s'); // Guardar fecha actual
     
     echo json_encode([
         'success' => true,
@@ -99,7 +100,8 @@ if ($insert_stmt->execute()) {
         'user' => [
             'id' => $user_id,
             'nombre_usuario' => $nombre_usuario,
-            'email' => $email
+            'email' => $email,
+            'fecha_registro' => $_SESSION['fecha_registro']
         ]
     ]);
 } else {

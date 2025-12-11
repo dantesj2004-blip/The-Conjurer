@@ -71,7 +71,7 @@
         // Verificar sesión
         window.addEventListener('DOMContentLoaded', async function() {
             try {
-                const response = await fetch('/The-Conjurer/check_session.php', { credentials: 'same-origin' });
+                const response = await fetch('check_session.php', { credentials: 'same-origin' });
                 const session = await response.json();
                 if (session.logged_in) {
                     document.querySelector('.btn-register').style.display = 'none';
