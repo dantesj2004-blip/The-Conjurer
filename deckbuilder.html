@@ -22,18 +22,19 @@
 <div class="auth-buttons">
 <a class="btn-auth btn-register" href="auth.html">REGISTRARSE</a>
 <a class="btn-auth btn-login" href="auth.html">ENTRAR</a>
-<a href="perfil.html" class="btn-auth btn-login hidden" id="userButton" style="display: none;">MI PERFIL</a>
+<a href="perfil.html" class="btn-auth btn-perfil" id="userButton" style="display: none;">MI PERFIL</a>
 </div>
 </div>
 <div class="logo-area">
-<a href="index.html"><img alt="Logo The Conjurer" class="logo-main" src="Logo.png"/></a>
-</div>
-<nav class="main-nav">
-<a href="index.html">INICIO</a>
-<a href="Galeria.html">GALERÍA</a>
-<a class="active" href="deckbuilder.html">DECKBUILDER</a>
-<a href="reglas.html">REGLAS</a>
-<a href="noticias.html">NOTICIAS</a>
+<a href="index.html"><img alt="Logo The Conjurer" class="logo-main" src="Logo.png"/></a>  </div>
+  
+  <nav class="main-nav">
+  <a href="index.html">INICIO</a>
+  <a href="Galeria.html">GALERÍA</a>
+  <a class="active" href="deckbuilder.html">DECKBUILDER</a>
+  <a href="simulador.html">SIMULADOR</a>
+  <a href="noticias.html">NOTICIAS</a>
+  <a href="reglas.html">REGLAS</a>
 </nav>
 </header>
 <main class="deckbuilder-container">
@@ -114,7 +115,19 @@
             if (session.logged_in) {
                 document.querySelector('.btn-register').style.display = 'none';
                 document.querySelector('.btn-login').style.display = 'none';
-                document.getElementById('userButton').style.display = 'block';
+                const userBtn = document.getElementById('userButton');
+                if (userBtn) {
+                    // Mostrar y aplicar estilos inline para forzar apariencia
+                    userBtn.style.display = 'inline-block';
+                    userBtn.style.background = '#1f1f1f';
+                    userBtn.style.color = '#ffffff';
+                    userBtn.style.border = '1px solid rgba(255,255,255,0.06)';
+                    userBtn.style.padding = '8px 15px';
+                    userBtn.style.marginLeft = '10px';
+                    userBtn.style.borderRadius = '5px';
+                    userBtn.style.fontWeight = '700';
+                    userBtn.style.textDecoration = 'none';
+                }
             }
         } catch (error) {
             console.error('Error al verificar sesión:', error);

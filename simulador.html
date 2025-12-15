@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMULADOR - The Conjurer: Guerra de Mitos</title>
+    <link rel="icon" type="image/png" href="Logo.png"> 
+    <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="GaleriaCSS.css">
+    <link rel="stylesheet" href="simulador.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="header-top-bar">
+            <div class="auth-buttons">
+                <a href="auth.html" class="btn-auth btn-register">REGISTRO</a>
+                <a href="auth.html" class="btn-auth btn-login">LOGIN</a>
+                <a href="perfil.html" class="btn-auth btn-perfil" id="userButton" style="display: none;">MI PERFIL</a>
+            </div>
+        </div>
+        
+        <div class="logo-area">
+            <a href="index.html"><img src="Logo.png" alt="Logo The Conjurer" class="logo-main"></a>
+        </div>
+
+        <nav class="main-nav">
+            <a href="index.html">INICIO</a>
+            <a href="Galeria.html">GALERÍA</a>
+            <a href="deckbuilder.html">DECKBUILDER</a>
+            <a href="simulador.html" class="active">SIMULADOR</a>
+            <a href="noticias.html">NOTICIAS</a>
+            <a href="reglas.html">REGLAS</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Título principal -->
+        <section class="simulator-header">
+            <h1 class="text-green">SIMULADOR DE PARTIDA</h1>
+            <h2 class="text-purple">GUERRA DE MITOS</h2>
+            <p class="simulator-description">Simula el inicio de una partida de GDM. Roba 5 cartas de Designios y revela 4 Oráculos de Dioses.</p>
+        </section>
+
+        <!-- Controles de mazo -->
+        <section class="deck-controls">
+            <div class="control-group">
+                <h3>Seleccionar Mazo</h3>
+                <div class="deck-options">
+                    <button id="loadFromProfile" class="btn-control">Cargar desde Perfil</button>
+                    <button id="importFromJSON" class="btn-control">Importar JSON</button>
+                    <input type="file" id="jsonFileInput" accept=".json" style="display: none;">
+                </div>
+                <div id="deckStatus" class="deck-status">
+                    <span id="deckName">Sin mazo seleccionado</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mesa de juego -->
+        <section class="game-table">
+            <!-- Panteón (superior izquierda) -->
+            <div class="pantheon-area">
+                <h3>Panteón</h3>
+                <div id="pantheonCard" class="card-slot pantheon-slot">
+                    <div class="card-placeholder">
+                        <span>Panteón</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Oráculos de Dioses (centro) -->
+            <div class="oracles-area">
+                <h3>Oráculos Iniciales</h3>
+                <div class="oracles-grid">
+                    <div class="oracle-slot" data-oracle="0">
+                        <div class="card card-back gods-back">
+                            <img src="GDM/Traseras/TraseraDioses.png" alt="Trasera Dioses">
+                        </div>
+                    </div>
+                    <div class="oracle-slot" data-oracle="1">
+                        <div class="card card-back gods-back">
+                            <img src="GDM/Traseras/TraseraDioses.png" alt="Trasera Dioses">
+                        </div>
+                    </div>
+                    <div class="oracle-slot" data-oracle="2">
+                        <div class="card card-back gods-back">
+                            <img src="GDM/Traseras/TraseraDioses.png" alt="Trasera Dioses">
+                        </div>
+                    </div>
+                    <div class="oracle-slot" data-oracle="3">
+                        <div class="card card-back gods-back">
+                            <img src="GDM/Traseras/TraseraDioses.png" alt="Trasera Dioses">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mazo de Designios (derecha) -->
+            <div class="destiny-deck-area">
+                <h3>Mazo de Designios</h3>
+                <div id="destinyDeck" class="deck-pile">
+                    <div class="card card-back destiny-back">
+                        <img src="GDM/Traseras/TraseraDesignios.png" alt="Trasera Designios">
+                        <div class="deck-counter">
+                            <span id="destinyDeckCount">30</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="deck-instruction">Haz click 5 veces para robar cartas</p>
+                <div class="draw-counter">
+                    <span>Cartas robadas: </span>
+                    <span id="cardsDrawn">0</span>/5
+                </div>
+            </div>
+
+            <!-- Mano del jugador -->
+            <div class="player-hand">
+                <h3>Tu Mano</h3>
+                <div id="handCards" class="hand-area">
+                    <!-- Las cartas robadas aparecerán aquí -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Controles de juego -->
+        <section class="game-controls">
+            <button id="resetGame" class="btn-control btn-reset">Reiniciar Simulación</button>
+            <button id="shuffleDecks" class="btn-control">Barajar Mazos</button>
+        </section>
+
+        <!-- Modal para selección de mazo desde perfil -->
+        <div id="profileDeckModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Seleccionar Mazo del Perfil</h3>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div id="profileDecks" class="deck-list">
+                        <!-- Los mazos del perfil se cargarán aquí -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>THE CONJURER</h3>
+                <p>GDM DeckBuilder Project © 2025</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="simulador.js"></script>
+    <script>
+        // Verificar sesión y actualizar botones
+        window.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/The-Conjurer/check_session.php', { credentials: 'same-origin' });
+                const session = await response.json();
+
+                if (session.logged_in) {
+                    // Ocultar botones de login/register
+                    document.querySelector('.btn-register').style.display = 'none';
+                    document.querySelector('.btn-login').style.display = 'none';
+                    // Mostrar botón de perfil
+                    document.getElementById('userButton').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error checking session:', error);
+            }
+        });
+    </script>
+</body>
+</html>

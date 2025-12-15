@@ -378,17 +378,31 @@ html, body, main { overflow: visible !important; }
         gap: 10px;
         flex-wrap: wrap;
         margin-bottom: 10px;
-    }    .btn-auth {
+    }    
+    .btn-auth {
     padding: 8px 15px;
     margin-left: 10px;
     border-radius: 5px;
-    color: #000000; /* Cambiar texto a negro para botones verdes */
+    color: #ffffff; /* Cambiar texto a negro para botones verdes */
     text-decoration: none;
-    background-color: var(--secondary-green);
+    background-color: var(--background-dark);
 }
 
 /* Mantener texto blanco para botones de registro y entrada */
 .btn-auth.btn-register,
 .btn-auth.btn-login {
     color: #ffffff;
+}
+
+/* Asegurar que el botón MI PERFIL mantenga el estilo global */
+.btn-auth.btn-perfil {
+    background: #1f1f1f !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    padding: 8px 15px !important;
+    margin-left: 10px !important;
+    border-radius: 5px !important;
+    font-weight: bold !important;
+    text-decoration: none !important;
+    transition: background-color 0.3s !important;
 }

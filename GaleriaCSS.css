@@ -36,6 +36,11 @@ body {
 .btn-login {
     background: linear-gradient(to bottom, #2e2e2e, #000);
 }
+.btn-perfil {
+    background: #1f1f1f; /* Color solicitado exactamente */
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.06);
+}
 .btn-auth {
     padding: 8px 15px;
     margin-left: 10px;
