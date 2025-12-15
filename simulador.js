@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Estado
     let destinyDeck = [];
     let godsDeck = [];
+    // Master copies to allow full reset when re-barajamos
+    let destinyDeckMaster = [];
+    let godsDeckMaster = [];
     let pantheon = { name: 'Indefinido', image: null };
     let drawnCount = 0;
     const MAX_DRAW = 5;
@@ -35,6 +38,9 @@ document.addEventListener('DOMContentLoaded', () => {
             godsDeck.push({ id: `g${i}`, name: `Dios ${i}`, image: null });
         }
         pantheon = { name: 'Grecia', image: null };
+        // store master copies
+        destinyDeckMaster = destinyDeck.map(c => Object.assign({}, c));
+        godsDeckMaster = godsDeck.map(c => Object.assign({}, c));
     }
 
     function shuffle(array) {
@@ -292,6 +298,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         shuffle(destinyDeck);
         shuffle(godsDeck);
+        // store master copies for future resets
+        destinyDeckMaster = destinyDeck.map(c => Object.assign({}, c));
+        godsDeckMaster = godsDeck.map(c => Object.assign({}, c));
         drawnCount = 0;
         handArea.innerHTML = '';
         // reset oracle slots visuals
@@ -362,6 +371,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     shuffle(destinyDeck);
                     shuffle(godsDeck);
+                    // store master copies for future resets
+                    destinyDeckMaster = destinyDeck.map(c => Object.assign({}, c));
+                    godsDeckMaster = godsDeck.map(c => Object.assign({}, c));
                     drawnCount = 0;
                     handArea.innerHTML = '';
                     oracleSlots.forEach((slot) => {
@@ -476,10 +488,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     shuffleBtn.addEventListener('click', () => {
-        // Barajar y reiniciar la simulación con el mazo actualmente cargado
+        // Restaurar los mazos al estado completo del mazo cargado y barajar
+        if (Array.isArray(destinyDeckMaster) && destinyDeckMaster.length > 0) {
+            destinyDeck = destinyDeckMaster.map(c => Object.assign({}, c));
+        }
+        if (Array.isArray(godsDeckMaster) && godsDeckMaster.length > 0) {
+            godsDeck = godsDeckMaster.map(c => Object.assign({}, c));
+        }
         shuffle(destinyDeck);
         shuffle(godsDeck);
-        // Reiniciar estado visual y contador pero mantener los decks importados
+        // Reiniciar estado visual y contador
         drawnCount = 0;
         handArea.innerHTML = '';
         oracleSlots.forEach((slot) => {
