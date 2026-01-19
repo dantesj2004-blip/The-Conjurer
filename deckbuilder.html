@@ -67,7 +67,6 @@
 <select class="filter-select" id="era-filter">
 <option value="">Toda Era</option>
 </select>
-<button class="btn-auth" onclick="applyFilters()">Aplicar Filtros</button>
 </div>
 <div id="gallery-grid">
 <p>Cargando cartas...</p>
@@ -75,8 +74,12 @@
 </div>
 <div class="deck-list">
     <h2>
-        <span id="deck-name" contenteditable="true" title="Haz clic para editar">Tu Mazo</span> (Deck) 
-        <i class="ph-bold ph-pencil-simple" style="cursor: help; font-size: 0.8em; vertical-align: middle;"></i>
+        <span id="deck-name-display" contenteditable="true" title="Haz clic para editar">Tu Mazo</span>
+        <i id="deck-name-icon" class="ph-bold ph-pencil-simple" title="Haz clic para editar el nombre"></i>
+        <span id="deck-name-controls" style="display: none; font-size: 0.8em; margin-left: 10px;">
+            <i id="deck-name-save" class="ph-bold ph-check-circle" title="Guardar (Enter)" style="cursor: pointer; color: #97e88d; margin-right: 8px;"></i>
+            <i id="deck-name-cancel" class="ph-bold ph-x-circle" title="Cancelar (Esc)" style="cursor: pointer; color: #ff6b6b;"></i>
+        </span>
     </h2>
 
 <div class="deck-actions">
@@ -85,6 +88,7 @@
 <button class="btn-auth" onclick="exportMazoToJSON()">Exportar Mazo</button>
 <input accept=".json" id="importMazoFile" onchange="importMazoFromJSON(event)" style="display:none" type="file"/>
 <button class="btn-auth" onclick="document.getElementById('importMazoFile').click()">Importar Mazo</button>
+<button class="btn-auth" id="new-mazo-btn" title="Crea un nuevo mazo vacío">Nuevo Mazo</button>
 </div>
 <div class="deck-section" id="god-deck">
 <h3>Mazo de Dioses (<span id="god-deck-count">0</span>/20+)</h3>

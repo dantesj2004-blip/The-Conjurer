@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - The Conjurer: Guerra de Mitos</title>
+    <link rel="icon" type="image/png" href="Logo.png"> 
+    <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="GaleriaCSS.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <style>
+        /* Estilos adicionales para perfil */
+        .profile-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            min-height: calc(100vh - 400px);
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, rgba(200, 115, 196, 0.2), rgba(151, 232, 141, 0.1));
+            border: 2px solid var(--primary-purple);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .user-profile-info h2 {
+            font-family: 'Metal Mania', cursive;
+            font-size: 2rem;
+            color: var(--secondary-green);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .user-profile-info p {
+            color: #ccc;
+            margin: 5px 0;
+            font-size: 0.95rem;
+        }
+
+        .user-profile-info .email {
+            color: var(--secondary-green);
+            font-weight: 700;
+        }
+
+        .btn-logout {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #ff6b6b, #ff8787);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+        }
+
+        .btn-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .section-title {
+            font-family: 'Metal Mania', cursive;
+            font-size: 2rem;
+            color: var(--primary-purple);
+            text-transform: uppercase;
+            margin: 40px 0 30px 0;
+            letter-spacing: 1px;
+            border-bottom: 2px solid var(--secondary-green);
+            padding-bottom: 15px;
+        }
+
+        /* SECCIÓN DE MAZOS */
+        .mazos-section {
+            margin-bottom: 60px;
+        }
+
+        .mazos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .mazo-card {
+            background: rgba(59, 0, 102, 0.3);
+            border: 2px solid var(--primary-purple);
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mazo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(200, 115, 196, 0.3);
+            border-color: var(--secondary-green);
+        }
+
+        .mazo-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(151, 232, 141, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .mazo-card:hover::before {
+            left: 100%;
+        }
+
+        .mazo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .mazo-name {
+            font-family: 'Metal Mania', cursive;
+            font-size: 1.2rem;
+            color: var(--secondary-green);
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        .mazo-badge {
+            background: var(--secondary-green);
+            color: var(--background-dark);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .mazo-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-left: 3px solid var(--secondary-green);
+            border-radius: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            color: var(--secondary-green);
+            font-weight: 700;
+            margin-top: 3px;
+        }
+
+        .mazo-description {
+            color: #ccc;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .mazo-actions {
+            display: flex;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .mazo-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--secondary-green);
+            background: transparent;
+            color: var(--secondary-green);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .mazo-btn:hover {
+            background: var(--secondary-green);
+            color: var(--background-dark);
+        }
+
+        .mazo-btn.primary {
+            background: var(--primary-purple);
+            border-color: var(--primary-purple);
+            color: white;
+        }
+
+        .mazo-btn.primary:hover {
+            background: var(--secondary-green);
+            border-color: var(--secondary-green);
+            color: var(--background-dark);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            background: rgba(59, 0, 102, 0.2);
+            border: 2px dashed var(--primary-purple);
+            border-radius: 8px;
+            color: #aaa;
+        }
+
+        .empty-state h3 {
+            color: var(--primary-purple);
+            margin-bottom: 10px;
+        }
+
+        .empty-state a {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: var(--primary-purple);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .empty-state a:hover {
+            background: var(--secondary-green);
+            color: var(--background-dark);
+        }
+
+        /* SECCIÓN ADMIN */
+        .admin-section {
+            background: rgba(200, 115, 196, 0.1);
+            border: 2px solid var(--secondary-green);
+            border-radius: 8px;
+            padding: 30px;
+            margin-top: 40px;
+        }
+
+        .admin-section h2 {
+            font-family: 'Metal Mania', cursive;
+            font-size: 1.5rem;
+            color: var(--secondary-green);
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .admin-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--secondary-green);
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .admin-card h3 {
+            color: var(--secondary-green);
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+        }
+
+        .admin-card p {
+            color: #aaa;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+        }
+
+        .admin-card a {
+            display: inline-block;
+            padding: 8px 15px;
+            background: var(--secondary-green);
+            color: var(--background-dark);
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .admin-card a:hover {
+            background: var(--primary-purple);
+            color: white;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .message {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        
+
+        @media (max-width: 768px) {
+            .profile-header {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .mazos-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .profile-container {
+                padding: 0 15px;
+            }
+
+            .profile-header {
+                padding: 20px;
+            }
+
+            .mazos-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-top-bar">
+            <div class="auth-buttons">
+                <a href="auth.html" class="btn-auth btn-register">REGISTRARSE</a>
+                <a href="auth.html" class="btn-auth btn-login">ENTRAR</a>
+            </div>
+        </div>
+        
+        <div class="logo-area">
+            <a href="index.html"><img src="Logo.png" alt="Logo The Conjurer" class="logo-main"></a>
+        </div>
+        
+        <nav class="main-nav">
+            <a href="index.html">INICIO</a>
+            <a href="Galeria.html">GALERÍA</a>
+            <a href="deckbuilder.html" id="deckbuilder-nav-link">DECKBUILDER</a>
+            <a href="reglas.html">REGLAS</a>
+            <a href="noticias.html">NOTICIAS</a>
+            <a href="perfil.html" class="active">MI PERFIL</a>
+        </nav>
+    </header>
+
+    <div class="profile-container">
+        <div class="profile-header">
+            <div class="user-profile-info">
+                <h2 id="userName">Usuario</h2>
+                <p>Email: <span class="email" id="userEmail">email@ejemplo.com</span></p>
+                <p id="userDate" style="color: #888; font-size: 0.85rem;">Miembro desde hace X días</p>
+            </div>
+            <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
+        </div>
+
+        <div id="errorMessage" class="message error"></div>
+
+        <div class="mazos-section">
+            <h3 class="section-title">Mis Mazos</h3>
+            
+            <div id="mazosContainer" class="mazos-grid">
+                </div>
+
+            <div id="emptyMazos" class="empty-state">
+                <h3>No hay mazos guardados</h3>
+                <p>Crea tu primer mazo en el Deckbuilder y podrás verlo aquí</p>
+                <a href="deckbuilder.html">Crear Mazo Ahora</a>
+            </div>
+        </div>
+
+        <div id="adminSection" class="admin-section hidden">
+            <h2>⚙️ Panel de Administración</h2>
+            <p style="color: #ccc; margin-bottom: 20px;">Como administrador, tienes acceso a herramientas especiales para gestionar el contenido del juego.</p>
+            
+            <div class="admin-grid">
+                <div class="admin-card">
+                    <div style="font-size: 1.8rem; margin-bottom: 8px;">📝</div>
+                    <h3>Gestionar Noticias</h3>
+                    <p>Crear, editar y eliminar noticias del juego.</p>
+                    <a href="admin_noticias.html">Panel</a>
+                </div>
+
+                <div class="admin-card">
+                    <div style="font-size: 1.8rem; margin-bottom: 8px;">👥</div>
+                    <h3>Gestionar Usuarios</h3>
+                    <p>Ver lista de usuarios registrados.</p>
+                    <a href="admin_usuarios.html">Panel</a>
+                </div>
+
+                <div class="admin-card">
+                    <div style="font-size: 1.8rem; margin-bottom: 8px;">🎴</div>
+                    <h3>Gestionar Cartas</h3>
+                    <p>Agregar y editar cartas.</p>
+                    <a href="admin_cartas.html">Panel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mazoDetailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: rgba(59, 0, 102, 0.95); border: 2px solid var(--primary-purple); border-radius: 12px; padding: 30px; max-width: 90%; width: 1200px; max-height: 90vh; overflow-y: hidden; color: #fff; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--secondary-green); padding-bottom: 15px;">
+                <div>
+                    <h2 id="mazoDetailTitle" style="font-family: 'Metal Mania'; font-size: 1.8rem; color: var(--secondary-green); margin: 0; text-transform: uppercase;">Nombre del Mazo</h2>
+                    <p style="margin: 5px 0 0 0; color: #aaa;">Mitología: <span id="mazoDetailMythology" style="color: var(--secondary-green); font-weight: bold;">N/A</span></p>
+                </div>
+                <button onclick="cerrarModalMazo()" style="background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;">✕</button>
+            </div>
+
+            <input type="hidden" id="mazoDetailId">
+
+            <div style="flex-grow: 1; display: flex; gap: 20px; overflow-y: hidden;">
+                <div style="width: 300px; min-width: 300px; overflow-y: auto; padding-right: 15px;">
+                    <div id="mazoDetailStats" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 3px solid var(--secondary-green);">
+                        <p style="margin: 5px 0; color: #ccc;"><strong>Total de Cartas:</strong> <span style="color: var(--secondary-green);">0</span></p>
+                        <p style="margin: 5px 0; color: #ccc;"><strong>Fuerza Total:</strong> <span style="color: var(--secondary-green);">0</span></p>
+                        <p style="margin: 5px 0; color: #ccc;"><strong>Creado:</strong> <span style="color: #999;">--</span></p>
+                    </div>
+
+                    <h3 style="color: var(--primary-purple); margin-top: 0; margin-bottom: 10px; text-transform: uppercase;">Mazo de Dioses</h3>
+                    <ul id="godCardsList" style="list-style: none; padding: 0; margin: 0 0 20px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px;">
+                        <li style="color: #999;">Sin cartas</li>
+                    </ul>
+
+                    <h3 style="color: var(--primary-purple); margin-bottom: 10px; text-transform: uppercase;">Mazo de Designios</h3>
+                    <ul id="destinyCardsList" style="list-style: none; padding: 0; margin: 0 0 20px 0; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 6px;">
+                        <li style="color: #999;">Sin cartas</li>
+                    </ul>
+                </div>
+
+                <div style="flex-grow: 1; overflow-y: auto; padding-right: 15px;">
+                    <h3 style="color: var(--secondary-green); margin-top: 0; margin-bottom: 10px; text-transform: uppercase;">Vista de Cartas</h3>
+                    <div id="cardGallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px;">
+                        <p id="galleryPlaceholder" style="color: #aaa; text-align: center; grid-column: 1/-1;">Cargando imágenes de las cartas...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 20px;">
+                <button onclick="descargarMazo('json')" style="padding: 10px; background: var(--secondary-green); color: var(--background-dark); border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase;">📥 JSON</button>
+                
+                <button onclick="descargarMazo('tts')" style="padding: 10px; background: var(--secondary-green); color: var(--background-dark); border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase;">📦 TTS (.zip)</button>
+                
+                <button onclick="cerrarModalMazo()" style="padding: 10px; background: var(--primary-purple); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>THE CONJURER</h3>
+                <p>GDM DeckBuilder Project © 2025</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- Variable global para guardar los mazos ---
+        let allUserMazos = []; 
+
+        // Verificar sesión al cargar
+        window.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/The-Conjurer/check_session.php', { credentials: 'same-origin' });
+                const session = await response.json();
+
+                if (!session.logged_in) {
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                document.getElementById('userName').textContent = session.nombre_usuario || 'Usuario';
+                document.getElementById('userEmail').textContent = session.email || 'email@ejemplo.com';
+                
+                const diasDesdeRegistro = Math.floor(Math.random() * 30) + 1; // Simulación
+                document.getElementById('userDate').textContent = `Miembro desde hace ${diasDesdeRegistro} días`;
+
+                loadMazos();
+
+                if (session.es_admin) {
+                    document.getElementById('adminSection').classList.remove('hidden');
+                }
+                
+                // INICIO DE SOLUCIÓN: Limpiar sessionStorage al usar el enlace de navegación principal
+                const deckbuilderLink = document.getElementById('deckbuilder-nav-link');
+                if (deckbuilderLink) {
+                    deckbuilderLink.addEventListener('click', function() {
+                        sessionStorage.removeItem('editingMazoId');
+                    });
+                }
+                // FIN DE SOLUCIÓN
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('errorMessage').textContent = 'Error al cargar el perfil: ' + error.message;
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        });
+
+        async function loadMazos() {
+            const container = document.getElementById('mazosContainer');
+            const emptyState = document.getElementById('emptyMazos');
+            container.innerHTML = '<p style="text-align: center; color: #aaa;">Cargando mazos...</p>';
+
+            try {
+                const response = await fetch('/The-Conjurer/get_mazos.php', { credentials: 'same-origin' });
+                const result = await response.json();
+
+                if (!response.ok || result.error) {
+                    throw new Error(result.error || 'Error al cargar mazos');
+                }
+
+                allUserMazos = result.mazos || [];
+
+                if (allUserMazos.length === 0) {
+                    container.style.display = 'none';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                container.style.display = 'grid';
+                emptyState.style.display = 'none';
+                container.innerHTML = '';
+
+                allUserMazos.forEach((mazo) => {
+                    const mazoCard = document.createElement('div');
+                    mazoCard.className = 'mazo-card';
+                    mazoCard.innerHTML = `
+                        <div class="mazo-header">
+                            <h3 class="mazo-name">${mazo.nombre}</h3>
+                            <span class="mazo-badge">${mazo.mitologia || 'Neutral'}</span>
+                        </div>
+                        <div class="mazo-stats">
+                            <div class="stat">
+                                <div class="stat-label">Cartas</div>
+                                <div class="stat-value">${mazo.total_cartas}</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">Fuerza</div>
+                                <div class="stat-value">${mazo.total_fuerza}</div>
+                            </div>
+                        </div>
+                        <p class="mazo-description" style="font-size: 0.8rem; color: #999;">Actualizado: ${new Date(mazo.fecha_actualizacion).toLocaleDateString('es-ES')}</p>
+                        <div class="mazo-actions">
+                            <button class="mazo-btn primary" onclick="verDetalleMazo(${mazo.id})">Ver</button>
+                            <button class="mazo-btn" onclick="editarMazo(${mazo.id})">Editar</button>
+                            <button class="mazo-btn" style="border-color: #ff8787; color: #ff8787;" onclick="eliminarMazo(${mazo.id})">Eliminar</button>
+                        </div>
+                    `;
+                    container.appendChild(mazoCard);
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #ff8787;">Error: ${error.message}</div>`;
+            }
+        }
+
+        function verDetalleMazo(mazoId) {
+            abrirModalDetalleMazo(mazoId);
+        }
+
+        function editarMazo(mazoId) {
+            sessionStorage.setItem('editingMazoId', mazoId);
+            window.location.href = 'deckbuilder.html';
+        }
+
+        async function eliminarMazo(mazoId) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este mazo? Esta acción no se puede deshacer.')) {
+                return;
+            }
+            try {
+                const response = await fetch('/The-Conjurer/delete_mazo.php', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mazo_id: mazoId })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert('✅ Mazo eliminado');
+                    loadMazos(); // Recarga la lista de mazos
+                } else {
+                    alert('❌ Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error al eliminar: ' + error.message);
+            }
+        }
+
+        function abrirModalDetalleMazo(mazoId) {
+            const mazo = allUserMazos.find(m => m.id === mazoId);
+            if (!mazo) {
+                alert('No se encontró el mazo');
+                return;
+            }
+            mostrarModalMazo(mazo);
+        }
+
+        function mostrarModalMazo(mazo) {
+            const modal = document.getElementById('mazoDetailModal');
+            const mazoData = mazo.mazo_data;
+            const mazoCards = mazoData.mazoCards || {};
+            const cardsDetails = mazoData.cardsDetails || [];
+            const cardGallery = document.getElementById('cardGallery');
+
+            const godCards = cardsDetails.filter(c => ['Panteón', 'Personaje', 'Recurso', 'Evento'].includes(c.Tipo));
+            const destinyCards = cardsDetails.filter(c => ['Acción', 'Invocación', 'Equipo'].includes(c.Tipo));
+
+            let godCardsHTML = godCards.map(card => {
+                const count = mazoCards[card.ID] || 1;
+                return `<li>x${count} - ${card.Nombre} (${card.Tipo})</li>`;
+            }).join('');
+
+            let destinyCardsHTML = destinyCards.map(card => {
+                const count = mazoCards[card.ID] || 1;
+                return `<li>x${count} - ${card.Nombre} (${card.Tipo})</li>`;
+            }).join('');
+
+            if (!godCardsHTML) godCardsHTML = '<li style="color: #999;">Sin cartas</li>';
+            if (!destinyCardsHTML) destinyCardsHTML = '<li style="color: #999;">Sin cartas</li>';
+            
+            const allCards = [...godCards, ...destinyCards];
+            let galleryHTML = allCards.map(card => {
+                const count = mazoCards[card.ID] || 1;
+                const cardImageUrl = card['URL-IMG'] || 'placeholder_card.jpg'; 
+                
+                return Array.from({ length: count }, (_, i) => {
+                    return `
+                        <div style="position: relative; border: 1px solid var(--primary-purple); border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">
+                            <img 
+                                src="${cardImageUrl}" 
+                                onerror="this.onerror=null; this.src='placeholder_card.jpg';" 
+                                alt="${card.Nombre}" 
+                                style="width: 100%; height: auto; display: block;"
+                            >
+                            <div style="position: absolute; top: 5px; left: 5px; background: var(--secondary-green); color: var(--background-dark); border-radius: 4px; padding: 2px 6px; font-weight: bold; font-size: 0.75rem;">
+                                ${card.Tipo ? card.Tipo.charAt(0) : '?'}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }).join('');
+
+            if (!galleryHTML) galleryHTML = '<p style="color: #aaa; text-align: center; grid-column: 1/-1;">No hay cartas para mostrar.</p>';
+            
+            document.getElementById('mazoDetailTitle').textContent = mazo.nombre;
+            document.getElementById('mazoDetailMythology').textContent = mazo.mitologia || 'Neutral';
+            document.getElementById('mazoDetailStats').innerHTML = `
+                <p><strong>Total de Cartas:</strong> <span style="color: var(--secondary-green);">${mazo.total_cartas}</span></p>
+                <p><strong>Fuerza Total:</strong> <span style="color: var(--secondary-green);">${mazo.total_fuerza}</span></p>
+                <p><strong>Creado:</strong> <span style="color: #999;">${new Date(mazo.fecha_creacion).toLocaleDateString('es-ES')}</span></p>
+            `;
+            document.getElementById('godCardsList').innerHTML = godCardsHTML;
+            document.getElementById('destinyCardsList').innerHTML = destinyCardsHTML;
+            document.getElementById('mazoDetailId').value = mazo.id;
+            cardGallery.innerHTML = galleryHTML; 
+
+            modal.style.display = 'flex';
+        }
+
+        function cerrarModalMazo() {
+            const modal = document.getElementById('mazoDetailModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // --- ✅ INICIO SECCIÓN TTS (Añadida) ---
+        // (Funciones adaptadas de deckbuilder.js)
+
+        function getMazoDetailsFromMazoObject(mazo) {
+            const mazoData = mazo.mazo_data;
+            const mazoCards = mazoData.mazoCards || {};
+            const cardsDetails = mazoData.cardsDetails || [];
+            return cardsDetails.map(card => ({ ...card, count: mazoCards[card.ID] || 1 }));
+        }
+
+        function getCardMazoType(type) {
+            const GOD_MAZO_TYPES = ['Panteón', 'Personaje', 'Recurso', 'Evento'];
+            const DESTINY_MAZO_TYPES = ['Acción', 'Invocación', 'Equipo'];
+            if (GOD_MAZO_TYPES.includes(type)) return 'god';
+            if (DESTINY_MAZO_TYPES.includes(type)) return 'destiny';
+            return 'unknown';
+        }
+
+        function getCardImageURLsImproved(mazo, mazoType) {
+            const allCardsInMazo = getMazoDetailsFromMazoObject(mazo);
+            const cards = allCardsInMazo.filter(c => getCardMazoType(c.Tipo) === mazoType);
+            const urls = [];
+            cards.forEach(card => {
+                const img = card['URL-IMG'] || 'placeholder_card.jpg';
+                for (let i = 0; i < card.count; i++) {
+                    urls.push(img);
+                }
+            });
+            return urls;
+        }
+
+        function generateCompleteChecklist(mazo) {
+            const allCards = getMazoDetailsFromMazoObject(mazo);
+            let checklist = "";
+            allCards.forEach(card => {
+                checklist += `x${card.count} - ${card.Nombre} (${card.Tipo})\n`;
+            });
+            return checklist;
+        }
+
+        async function createMazoCanvasImproved(urls, cols = 10) {
+            if (!urls || urls.length === 0) return null;
+
+            const cardImgs = await Promise.all(urls.map(src => new Promise(resolve => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous'; // Necesario para canvas
+                img.onload = () => resolve(img);
+                img.onerror = () => {
+                    console.warn(`Error cargando imagen: ${src}, usando placeholder.`);
+                    const placeholderImg = new Image();
+                    placeholderImg.src = 'placeholder_card.jpg'; // Asegúrate que este archivo exista
+                    placeholderImg.onload = () => resolve(placeholderImg);
+                    placeholderImg.onerror = () => resolve(null);
+                };
+                img.src = src;
+            })));
+
+            const validImgs = cardImgs.filter(img => img !== null);
+            if (validImgs.length === 0) return null;
+
+            const cardWidth = 250;
+            const cardHeight = 350;
+            const maxCards = 70;
+            const rows = 7;
+            
+            const blankCardCanvas = document.createElement("canvas");
+            blankCardCanvas.width = cardWidth;
+            blankCardCanvas.height = cardHeight;
+            const blankCtx = blankCardCanvas.getContext("2d");
+            blankCtx.fillStyle = "#2a2a2a";
+            blankCtx.fillRect(0, 0, cardWidth, cardHeight);
+            
+            const allImages = [...validImgs];
+            while (allImages.length < maxCards) {
+                allImages.push(blankCardCanvas);
+            }
+            
+            const finalImages = allImages.slice(0, maxCards);
+            const canvas = document.createElement("canvas");
+            canvas.width = cols * cardWidth;
+            canvas.height = rows * cardHeight;
+            const ctx = canvas.getContext("2d");
+
+            finalImages.forEach((img, i) => {
+                const x = (i % cols) * cardWidth;
+                const y = Math.floor(i / cols) * cardHeight;
+                ctx.drawImage(img, x, y, cardWidth, cardHeight);
+            });
+            return canvas;
+        }
+
+        async function exportMazoToTTSImproved(mazo, mazoNombre) {
+            try {
+                if (!window.JSZip) {
+                    alert('❌ Error: La librería JSZip no está cargada.');
+                    return;
+                }
+
+                const godURLs = getCardImageURLsImproved(mazo, "god");
+                const destinyURLs = getCardImageURLsImproved(mazo, "destiny");
+
+                if (godURLs.length === 0 && destinyURLs.length === 0) {
+                    alert("⚠️ No hay cartas en el mazo para exportar.");
+                    return;
+                }
+
+                const zip = new JSZip();
+                
+                if (godURLs.length > 0) {
+                    const godCanvas = await createMazoCanvasImproved(godURLs);
+                    if (godCanvas) {
+                        const godData = godCanvas.toDataURL("image/png").split(",")[1];
+                        zip.file("decksheet_dioses.png", godData, { base64: true });
+                    }
+                }
+                
+                if (destinyURLs.length > 0) {
+                    const destinyCanvas = await createMazoCanvasImproved(destinyURLs);
+                    if (destinyCanvas) {
+                        const destinyData = destinyCanvas.toDataURL("image/png").split(",")[1];
+                        zip.file("decksheet_designios.png", destinyData, { base64: true });
+                    }
+                }
+                
+                try {
+                    const traseraGodResponse = await fetch("GDM/Traseras/TraseraDioses.png");
+                    if (traseraGodResponse.ok) zip.file("TraseraDioses.png", await traseraGodResponse.blob());
+                    
+                    const traseraDestinyResponse = await fetch("GDM/Traseras/TraseraDesignios.png");
+                    if (traseraDestinyResponse.ok) zip.file("TraseraDesignios.png", await traseraDestinyResponse.blob());
+                } catch (error) {
+                    console.warn("No se pudieron cargar las imágenes traseras:", error);
+                }
+                
+                const checklist = generateCompleteChecklist(mazo);
+                zip.file(`${mazoNombre}.txt`, checklist);
+                
+                const blob = await zip.generateAsync({ type: "blob" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                const cleanMazoName = mazoNombre.replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
+                a.download = `${cleanMazoName}_TTS.zip`;
+                a.click();
+                
+                alert(`✅ Pack TTS generado exitosamente!`);
+
+            } catch (error) {
+                console.error("Error en exportación TTS:", error);
+                alert("❌ Error durante la exportación TTS: " + error.message);
+            }
+        }
+        // --- ✅ FIN SECCIÓN TTS ---
+
+
+        // --- ✅ MODIFICADO: descargarMazo ahora maneja 'json' y 'tts' ---
+        async function descargarMazo(format) {
+            const mazoId = document.getElementById('mazoDetailId').value;
+            const mazoNombre = document.getElementById('mazoDetailTitle').textContent;
+
+            const mazo = allUserMazos.find(m => m.id === parseInt(mazoId));
+
+            if (!mazo) {
+                alert('Error al obtener datos del mazo');
+                return;
+            }
+
+            if (format === 'json') {
+                // Lógica JSON
+                try {
+                    const blob = new Blob([JSON.stringify(mazo.mazo_data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${mazoNombre.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    alert('✅ Mazo JSON descargado');
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error al descargar JSON: ' + error.message);
+                }
+            } else if (format === 'tts') {
+                // Lógica TTS
+                alert('Iniciando generación de pack TTS. Esto puede tardar un momento...');
+                await exportMazoToTTSImproved(mazo, mazoNombre);
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch('/The-Conjurer/logout_api.php', { method: 'POST', credentials: 'same-origin' });
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+            }
+        }
+
+         // Verificar sesión
+        window.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/The-Conjurer/check_session.php', { credentials: 'same-origin' });
+                const session = await response.json();
+                if (session.logged_in) {
+                    document.querySelector('.btn-register').style.display = 'none';
+                    document.querySelector('.btn-login').style.display = 'none';
+                    document.getElementById('userButton').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

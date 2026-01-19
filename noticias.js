@@ -112,63 +112,8 @@ function setupNewsListeners() {
 }
 
 async function openNewsDetail(newsId) {
-    try {
-        const response = await fetch(`/The-Conjurer/fetch_noticias.php?id=${newsId}`);
-        if (!response.ok) throw new Error('Error fetching news detail');
-        
-        const noticia = await response.json();
-        
-        // Crear o actualizar modal
-        let modal = document.getElementById('news-detail-modal');
-        if (!modal) {
-            modal = createNewsModal();
-            document.body.appendChild(modal);
-        }
-        
-        // Llenar modal con contenido
-        document.getElementById('news-modal-image').src = noticia.imagen_url;
-        document.getElementById('news-modal-image').onerror = function() { this.src = 'Logo.png'; };
-        document.getElementById('news-modal-title').textContent = noticia.titulo;
-        document.getElementById('news-modal-date').textContent = 'Publicado: ' + formatDate(noticia.fecha);
-        document.getElementById('news-modal-content').innerHTML = noticia.contenido;
-        
-        // Mostrar modal
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    } catch (error) {
-        console.error('Error opening news detail:', error);
-    }
-}
-
-function createNewsModal() {
-    const modal = document.createElement('div');
-    modal.id = 'news-detail-modal';
-    modal.className = 'news-detail-modal';
-    modal.innerHTML = `
-        <div class="news-detail-content">
-            <button class="close-modal" id="close-news-modal">&times;</button>
-            <img id="news-modal-image" src="" alt="Noticia" class="news-detail-image">
-            <div class="news-detail-text">
-                <h2 id="news-modal-title"></h2>
-                <div id="news-modal-date" class="news-detail-date"></div>
-                <div id="news-modal-content" class="news-detail-body"></div>
-            </div>
-        </div>
-    `;
-    
-    modal.querySelector('#close-news-modal').addEventListener('click', function() {
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-    });
-    
-    modal.addEventListener('click', function(e) {
-        if (e.target === this) {
-            this.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-    });
-    
-    return modal;
+    // Navegar a la plantilla de noticia con el ID como parámetro
+    window.location.href = `/The-Conjurer/noticia.html?id=${newsId}`;
 }
 
 function formatDate(dateString) {

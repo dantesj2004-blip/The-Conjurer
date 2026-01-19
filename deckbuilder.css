@@ -202,22 +202,63 @@ html, body, main { overflow: visible !important; }
         }
         
         /* --- NUEVO: Estilos para el nombre del mazo editable --- */
-        #deck-name {
+        #deck-name-display {
             display: inline-block;
             min-width: 100px;
-            padding: 0 5px;
+            padding: 5px 10px;
             border-radius: 4px;
             transition: all 0.2s;
-            color: var(--secondary-green); /* Hereda el color */
+            color: var(--secondary-green);
+            cursor: pointer;
+            border: 2px solid transparent;
         }
-        #deck-name:hover {
-            background-color: #333;
-            outline: 1px dashed var(--primary-purple);
+        
+        #deck-name-display:hover {
+            background-color: rgba(151, 232, 141, 0.1);
+            border: 2px solid var(--secondary-green);
+            outline: none;
         }
-        #deck-name:focus {
-            background-color: #444;
-            outline: 2px solid var(--primary-purple);
-            color: var(--text-color); /* Color al editar */
+        
+        #deck-name-display:focus {
+            background-color: rgba(151, 232, 141, 0.2);
+            border: 2px solid var(--secondary-green);
+            color: var(--secondary-green);
+            outline: none;
+            box-shadow: 0 0 8px rgba(151, 232, 141, 0.4);
+        }
+
+        /* Icono del lápiz */
+        #deck-name-icon {
+            cursor: pointer;
+            font-size: 0.9em;
+            vertical-align: middle;
+            margin-left: 8px;
+            transition: all 0.2s;
+            color: var(--secondary-green);
+        }
+
+        #deck-name-icon:hover {
+            transform: scale(1.15);
+            color: #97e88d;
+            text-shadow: 0 0 8px rgba(151, 232, 141, 0.6);
+        }
+
+        /* Controles de edición */
+        #deck-name-controls i {
+            vertical-align: middle;
+            font-size: 0.9em;
+            margin: 0 4px;
+            transition: all 0.2s;
+        }
+
+        #deck-name-save:hover {
+            transform: scale(1.2);
+            text-shadow: 0 0 8px rgba(151, 232, 141, 0.6);
+        }
+
+        #deck-name-cancel:hover {
+            transform: scale(1.2);
+            text-shadow: 0 0 8px rgba(255, 107, 107, 0.6);
         }
 
         .deck-section {
@@ -225,6 +266,20 @@ html, body, main { overflow: visible !important; }
             padding: 10px;
             border: 1px solid #444;
             border-radius: 5px;
+        }
+
+        .deck-section .btn-auth {
+            background-color: #97e88d;
+            color: #000000;
+            border: 1px solid #97e88d;
+            margin-top: 10px;
+            margin-left: 0;
+        }
+
+        .deck-section .btn-auth:hover {
+            background-color: #7dd67d;
+            border-color: #7dd67d;
+            box-shadow: 0 0 8px rgba(151, 232, 141, 0.4);
         }
 
         .deck-section h3 {
@@ -378,6 +433,18 @@ html, body, main { overflow: visible !important; }
         gap: 10px;
         flex-wrap: wrap;
         margin-bottom: 10px;
+    }
+
+    .deck-actions .btn-auth {
+        background-color: #97e88d;
+        color: #000000;
+        border: 1px solid #97e88d;
+    }
+
+    .deck-actions .btn-auth:hover {
+        background-color: #7dd67d;
+        border-color: #7dd67d;
+        box-shadow: 0 0 8px rgba(151, 232, 141, 0.4);
     }    
     .btn-auth {
     padding: 8px 15px;

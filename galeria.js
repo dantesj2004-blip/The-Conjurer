@@ -18,6 +18,17 @@ document.addEventListener('DOMContentLoaded', () => {
             closeModal();
         }
     });
+
+    // Agregar event listeners a los filtros
+    const searchBar = document.getElementById('search-bar');
+    const typeFilter = document.getElementById('type-filter');
+    const mythologyFilter = document.getElementById('mythology-filter');
+    const eraFilter = document.getElementById('era-filter');
+
+    if (searchBar) searchBar.addEventListener('input', applyGalleryFilters);
+    if (typeFilter) typeFilter.addEventListener('change', applyGalleryFilters);
+    if (mythologyFilter) mythologyFilter.addEventListener('change', applyGalleryFilters);
+    if (eraFilter) eraFilter.addEventListener('change', applyGalleryFilters);
 });
 
 // Función para cerrar la modal
@@ -72,12 +83,15 @@ function showCardDetails(cardId) {
     // Verifica si es un Panteón (Tipo de carta 'Panteón')
     if (card.Tipo && card.Tipo.toLowerCase().includes('panteón')) {
         image.classList.add('rotated');
-        // AJUSTE: Ancho del contenedor para Panteones grandes
-        imageContainer.style.width = '540px'; 
+        // Para Panteones: invertir dimensiones para compensar la rotación de 90 grados
+        // Después de rotar: 380x540 (como una carta normal vertical)
+        imageContainer.style.width = '540px';
+        imageContainer.style.height = '380px';
     } else {
         image.classList.remove('rotated');
-        // AJUSTE: Ancho estándar para cartas normales grandes
-        imageContainer.style.width = '380px'; 
+        // Para cartas normales: mantener 380x540 (vertical)
+        imageContainer.style.width = '380px';
+        imageContainer.style.height = '540px';
     }
 
     // --- 2. GENERACIÓN DE LA TABLA DE ATRIBUTOS ---
@@ -148,6 +162,12 @@ async function loadCardsFromDatabase() {
         allCardsData = data;
         cardGrid.innerHTML = '';
         
+        // Poblar los filtros de mitología y era
+        populateGalleryFilters();
+        
+        // Renderizar la galería inicial sin filtros
+        renderCardGrid();
+        
         allCardsData.forEach(card => {
             const originalImagePath = card['URL-IMG']; 
             if (!originalImagePath) return;
@@ -214,13 +234,44 @@ async function loadCardsFromDatabase() {
     }
 }
 
-// Renderiza un array de cartas en el grid (usa la misma estructura que antes)
-function renderCardGrid(cards) {
+// Renderiza un array de cartas en el grid (lógica idéntica al deckbuilder)
+function renderCardGrid(filterTerm = '', filterType = '', filterMythology = '', filterEra = '') {
     const cardGrid = document.getElementById('card-grid');
     if (!cardGrid) return;
-    cardGrid.innerHTML = '';
+    
+    cardGrid.innerHTML = ''; 
+    
+    if (!allCardsData || allCardsData.length === 0) {
+        cardGrid.innerHTML = '<p>No hay cartas cargadas.</p>';
+        return;
+    }
+    
+    const filteredCards = (allCardsData || []).filter(card => {
+        // 1. Filtro de búsqueda con validación de campos (ahora incluye Clave)
+        const filterTermUpper = filterTerm.toUpperCase();
+        const searchTermMatch = !filterTerm ||
+            (card.Nombre && card.Nombre.toUpperCase().includes(filterTermUpper)) ||
+            (card['Texto - Habilidades'] && card['Texto - Habilidades'].toUpperCase().includes(filterTermUpper)) ||
+            (card.Claves && card.Claves.toUpperCase().includes(filterTermUpper));
+        
+        // 2. Filtro por Tipo
+        const typeMatch = !filterType || card.Tipo === filterType;
+        
+        // 3. Filtro por Mitología 
+        const mythologyMatch = !filterMythology || card.Mitologia === filterMythology;
 
-    cards.forEach(card => {
+        // 4. Filtro por Era
+        const eraMatch = !filterEra || card.Era === filterEra;
+
+        return searchTermMatch && typeMatch && mythologyMatch && eraMatch;
+    });
+
+    if (filteredCards.length === 0) {
+         cardGrid.innerHTML = '<p>No se encontraron cartas con esos filtros.</p>';
+         return;
+    }
+
+    filteredCards.forEach(card => {
         const originalImagePath = card['URL-IMG']; 
         if (!originalImagePath) return;
 
@@ -308,22 +359,12 @@ function populateGalleryFilters() {
     }
 }
 
-// Aplica filtros en la galería y renderiza
+// Aplica filtros en la galería y renderiza (lógica idéntica al deckbuilder)
 function applyGalleryFilters() {
-    const filterTerm = document.getElementById('search-bar')?.value || '';
-    const filterType = document.getElementById('type-filter')?.value || '';
-    const filterMythology = document.getElementById('mythology-filter')?.value || '';
-    const filterEra = document.getElementById('era-filter')?.value || '';
-
-    const filtered = (allCardsData || []).filter(card => {
-        const searchTermMatch = !filterTerm ||
-            (card.Nombre && card.Nombre.toUpperCase().includes(filterTerm.toUpperCase())) ||
-            (card['Texto - Habilidades'] && card['Texto - Habilidades'].toUpperCase().includes(filterTerm.toUpperCase()));
-        const typeMatch = !filterType || card.Tipo === filterType;
-        const mythologyMatch = !filterMythology || card.Mitologia === filterMythology;
-        const eraMatch = !filterEra || card.Era === filterEra;
-        return searchTermMatch && typeMatch && mythologyMatch && eraMatch;
-    });
-
-    renderCardGrid(filtered);
+    const filterTerm = document.getElementById('search-bar').value;
+    const filterType = document.getElementById('type-filter').value;
+    const filterMythology = document.getElementById('mythology-filter').value;
+    const filterEra = document.getElementById('era-filter').value;
+    
+    renderCardGrid(filterTerm, filterType, filterMythology, filterEra);
 }

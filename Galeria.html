@@ -35,6 +35,26 @@
     <main class="gallery-content">
         <h1 id="gallery-title" class="gallery-title">Galería de Cartas GDM</h1>
         
+        <div class="filters-container">
+            <input class="filter-input" id="search-bar" placeholder="Buscar por Nombre, Habilidad o Clave..." type="text"/>
+            <select class="filter-select" id="type-filter">
+                <option value="">Todo Tipo</option>
+                <option value="Panteón">Panteón</option>
+                <option value="Personaje">Personaje</option>
+                <option value="Recurso">Recurso</option>
+                <option value="Evento">Evento</option>
+                <option value="Acción">Acción</option>
+                <option value="Invocación">Invocación</option>
+                <option value="Equipo">Equipo</option>
+            </select>
+            <select class="filter-select" id="mythology-filter">
+                <option value="">Toda Mitología</option>
+            </select>
+            <select class="filter-select" id="era-filter">
+                <option value="">Toda Era</option>
+            </select>
+        </div>
+        
         <div id="card-grid" class="card-grid">
             <p>Cargando cartas...</p> 
         </div>

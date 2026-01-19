@@ -101,6 +101,53 @@ body {
     text-shadow: 0 0 3px var(--primary-purple);
 }
 
+/* =======================================
+   FILTROS
+   ======================================= */
+.filters-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap; /* Asegurar responsive */
+}
+
+/* Estilos para los filtros */
+.filter-input, .filter-select {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #444;
+    background-color: #333;
+    color: var(--text-color);
+}
+
+.filter-input:focus, .filter-select:focus {
+    outline: none;
+    border-color: var(--primary-purple);
+    box-shadow: 0 0 5px rgba(200, 115, 196, 0.5);
+}
+
+.filter-select:hover, .filter-input:hover {
+    border-color: var(--primary-purple);
+}
+
+.btn-auth {
+    padding: 8px 15px;
+    margin-left: 10px;
+    border-radius: 5px;
+    color: #ffffff;
+    text-decoration: none;
+    background-color: #1f1f1f;
+    border: 1px solid rgba(255,255,255,0.06);
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+.btn-auth:hover {
+    background-color: #333;
+    border-color: var(--primary-purple);
+}
+
 .card-grid {
     display: grid;
     /* Ajustado: minmax permite que las cartas sean más grandes */
@@ -189,29 +236,30 @@ body {
 /* Imagen de la carta */
 .modal-image-container {
     flex-shrink: 0; 
-    /* AUMENTADO: De 340px a 380px (tamaño base) */
+    /* Dimensiones por defecto para cartas normales (380x540) */
     width: 380px; 
-    height: auto;
-    transition: width 0.3s ease; 
+    height: 540px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease; 
 }
 
 #modal-image {
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    transform-origin: top left; 
-    transition: transform 0.3s ease; 
+    transform-origin: center; 
+    transition: transform 0.3s ease;
+    object-fit: contain;
 }
 
 /* Rotación de 90 grados para Panteones */
 #modal-image.rotated {
-    /* Rota 90 grados y se desplaza para corregir el punto de origen */
-    transform: rotate(90deg) translateY(-100%); 
-    width: auto; 
-    /* AUMENTADO: De 340px a 380px (la altura se convierte en el ancho rotado) */
-    height: 380px; 
+    /* Rota 90 grados manteniendo el mismo tamaño visual que una carta normal */
+    transform: rotate(90deg); 
 }
 
 
@@ -297,14 +345,17 @@ body {
     
     .modal-image-container {
         width: 100%;
-        max-width: 300px; 
+        max-width: 300px;
+        height: auto;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     /* Desactivamos la rotación en móviles para ahorrar espacio */
     #modal-image.rotated {
-        transform: rotate(0deg) translateY(0); 
-        width: 100%;
-        height: auto;
+        transform: rotate(0deg); 
     }
     .modal-image-container {
         width: 100%;

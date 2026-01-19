@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Deckbuilder</title>
+</head>
+<body>
+    <h1>Debug Deckbuilder - Verificar Carga de Cartas</h1>
+    
+    <button onclick="debugDeckbuilder()">Ejecutar Debug</button>
+    <pre id="log" style="border: 1px solid #ccc; padding: 10px; height: 500px; overflow-y: auto; background: #f5f5f5;"></pre>
+
+    <script>
+        let logs = [];
+        
+        function log(msg) {
+            console.log(msg);
+            logs.push(msg);
+            document.getElementById('log').textContent = logs.join('\n');
+        }
+
+        async function debugDeckbuilder() {
+            logs = [];
+            log('=== Iniciando Debug ===');
+            
+            // 1. Verificar que fetch_cards.php responde
+            try {
+                log('\n1. Probando fetch_cards.php...');
+                const response = await fetch('fetch_cards.php', { credentials: 'same-origin' });
+                log(`   Status: ${response.status}`);
+                
+                const text = await response.text();
+                log(`   Response length: ${text.length} bytes`);
+                
+                const data = JSON.parse(text);
+                log(`   ✅ JSON válido. Total cartas: ${Array.isArray(data) ? data.length : 'NO ES ARRAY'}`);
+                
+                if (Array.isArray(data) && data.length > 0) {
+                    log(`   Primeras mitologías encontradas:`);
+                    const mits = [...new Set(data.map(c => c.Mitologia).filter(Boolean))];
+                    mits.slice(0, 5).forEach(m => log(`     - ${m}`));
+                }
+            } catch (error) {
+                log(`   ❌ ERROR: ${error.message}`);
+            }
+            
+            // 2. Revisar deckbuilder.js está cargado
+            log('\n2. Verificando deckbuilder.js...');
+            try {
+                if (typeof allCardsData !== 'undefined') {
+                    log(`   ✅ allCardsData existe: ${allCardsData.length} cartas`);
+                } else {
+                    log(`   ❌ allCardsData NO está definida`);
+                }
+                
+                if (typeof loadCardsFromDatabase === 'function') {
+                    log(`   ✅ loadCardsFromDatabase está definida`);
+                } else {
+                    log(`   ❌ loadCardsFromDatabase NO está definida`);
+                }
+                
+                if (typeof applyFilters === 'function') {
+                    log(`   ✅ applyFilters está definida`);
+                } else {
+                    log(`   ❌ applyFilters NO está definida`);
+                }
+            } catch (e) {
+                log(`   ❌ ERROR al verificar funciones: ${e.message}`);
+            }
+            
+            // 3. Revisar elementos HTML
+            log('\n3. Verificando elementos HTML...');
+            const galleryGrid = document.getElementById('gallery-grid');
+            const searchBar = document.getElementById('search-bar');
+            const mythologyFilter = document.getElementById('mythology-filter');
+            
+            log(`   gallery-grid: ${galleryGrid ? '✅ existe' : '❌ NO existe'}`);
+            log(`   search-bar: ${searchBar ? '✅ existe' : '❌ NO existe'}`);
+            log(`   mythology-filter: ${mythologyFilter ? '✅ existe' : '❌ NO existe'}`);
+            
+            // 4. Revisar la estructura esperada del HTML
+            log('\n4. Contenido de HTML elementos principales...');
+            if (galleryGrid) {
+                const childCount = galleryGrid.children.length;
+                log(`   gallery-grid tiene ${childCount} elementos hijos`);
+                log(`   Contenido: ${galleryGrid.innerHTML.substring(0, 100)}`);
+            }
+            
+            log('\n=== Debug Completado ===');
+        }
+    </script>
+</body>
+</html>

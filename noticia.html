@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Noticia - The Conjurer: Guerra de Mitos</title>
+    <link rel="icon" type="image/png" href="Logo.png"> 
+    <link href="https://fonts.googleapis.com/css2?family=Metal+Mania&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="GaleriaCSS.css">
+    <link rel="stylesheet" href="noticias.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-top-bar">
+            <div class="auth-buttons">
+                <a href="auth.html" class="btn-auth btn-register">REGISTRARSE</a>
+                <a href="auth.html" class="btn-auth btn-login">ENTRAR</a>
+                <a href="perfil.html" class="btn-auth btn-perfil" id="userButton" style="display: none;">MI PERFIL</a>
+            </div>
+        </div>
+        
+        <div class="logo-area">
+            <a href="index.html"><img src="Logo.png" alt="Logo The Conjurer" class="logo-main"></a>
+        </div>
+        
+        <nav class="main-nav">
+              <a href="index.html">INICIO</a>
+              <a href="Galeria.html">GALERÍA</a>
+              <a href="deckbuilder.html">DECKBUILDER</a>
+              <a href="simulador.html">SIMULADOR</a>
+              <a href="noticias.html">NOTICIAS</a>
+              <a href="reglas.html">REGLAS</a>
+        </nav>
+    </header>
+    
+    <main class="news-content news-detail-page">
+        <!-- Botón para volver -->
+        <a href="noticias.html" class="back-to-news-button">← Volver a Noticias</a>
+        
+        <!-- Contenedor de noticia individual -->
+        <article class="news-detail-article">
+            <img id="detail-image" src="" alt="Noticia" class="news-detail-feature-image" onerror="this.src='Logo.png'">
+            
+            <div class="news-detail-container">
+                <div class="news-detail-meta">
+                    <span id="detail-date" class="news-detail-meta-date"></span>
+                </div>
+                
+                <h1 id="detail-title" class="news-detail-main-title"></h1>
+                
+                <div id="detail-content" class="news-detail-main-content"></div>
+            </div>
+        </article>
+
+        <!-- Noticias Relacionadas -->
+        <section class="related-news-section">
+            <h2 class="section-subtitle">Noticias Relacionadas</h2>
+            <div class="related-news-grid">
+                <!-- Cargado dinámicamente -->
+            </div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>THE CONJURER</h3>
+                <p>GDM DeckBuilder Project © 2025</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let currentNewsId = null;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Verificar sesión
+            try {
+                const response = await fetch('/The-Conjurer/check_session.php', { credentials: 'same-origin' });
+                const session = await response.json();
+                if (session.logged_in) {
+                    document.querySelector('.btn-register').style.display = 'none';
+                    document.querySelector('.btn-login').style.display = 'none';
+                    document.getElementById('userButton').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+
+            // Obtener ID de la noticia desde URL
+            const urlParams = new URLSearchParams(window.location.search);
+            currentNewsId = urlParams.get('id');
+
+            if (currentNewsId) {
+                await loadNewsDetail(currentNewsId);
+                await loadRelatedNews(currentNewsId);
+            } else {
+                // Si no hay ID, redirigir a noticias
+                window.location.href = 'noticias.html';
+            }
+        });
+
+        async function loadNewsDetail(newsId) {
+            try {
+                const response = await fetch(`/The-Conjurer/fetch_noticias.php?id=${newsId}`);
+                if (!response.ok) throw new Error('Error fetching news detail');
+                
+                const noticia = await response.json();
+                
+                // Llenar la plantilla
+                document.getElementById('detail-image').src = noticia.imagen_url;
+                document.getElementById('detail-date').textContent = 'Publicado: ' + formatDate(noticia.fecha);
+                document.getElementById('detail-title').textContent = noticia.titulo;
+                document.getElementById('detail-content').innerHTML = noticia.contenido;
+                
+                // Actualizar título de la página
+                document.title = noticia.titulo + ' - The Conjurer: Guerra de Mitos';
+            } catch (error) {
+                console.error('Error loading news detail:', error);
+                document.getElementById('detail-content').innerHTML = '<p>Error al cargar la noticia.</p>';
+            }
+        }
+
+        async function loadRelatedNews(currentNewsId) {
+            try {
+                const response = await fetch('/The-Conjurer/fetch_noticias.php');
+                if (!response.ok) throw new Error('Error fetching news');
+                
+                const allNews = await response.json();
+                const related = allNews.filter(n => n.id != currentNewsId).slice(0, 3);
+                
+                const grid = document.querySelector('.related-news-grid');
+                let html = '';
+                
+                related.forEach(noticia => {
+                    html += `
+                        <article class="news-card-related" onclick="window.location.href='noticia.html?id=${noticia.id}'">
+                            <div class="news-image-container">
+                                <img src="${noticia.imagen_url}" alt="${noticia.titulo}" class="news-image" onerror="this.src='Logo.png'">
+                            </div>
+                            <div class="news-content-overlay">
+                                <div class="news-date">${formatDate(noticia.fecha)}</div>
+                                <h3 class="news-headline">${noticia.titulo}</h3>
+                                <p class="news-excerpt">${noticia.resumen}</p>
+                            </div>
+                        </article>
+                    `;
+                });
+                
+                grid.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading related news:', error);
+            }
+        }
+
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('es-ES', options);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Crear Carta - The Conjurer</title>
+  <link rel="stylesheet" href="crear_carta.css" />
+  <link rel="stylesheet" href="GaleriaCSS.css" />
+</head>
+<body>
+  <header class="main-header">
+    <div class="logo-area"><a href="index.html"><img src="Logo.png" alt="Logo" class="logo-main"></a></div>
+    <nav class="main-nav">
+      <a href="index.html">INICIO</a>
+      <a href="Galeria.html">GALERÍA</a>
+      <a href="deckbuilder.html">DECKBUILDER</a>
+      <a class="active" href="crear_carta.html">CREAR CARTA</a>
+    </nav>
+  </header>
+
+  <main class="create-card-container">
+    <h1>Crear / Clonar Carta</h1>
+
+    <section class="controls">
+      <label for="card-source">Usar carta existente como plantilla:</label>
+      <select id="card-source">
+        <option value="">-- Nuevo (vacío) --</option>
+      </select>
+      <label for="Tipo">Tipo:</label>
+      <select id="TipoSelect">
+        <option value="Panteón">Panteón</option>
+        <option value="Personaje">Personaje</option>
+        <option value="Recurso">Recurso</option>
+        <option value="Evento">Evento</option>
+        <option value="Acción">Acción</option>
+        <option value="Invocación">Invocación</option>
+        <option value="Equipo">Equipo</option>
+      </select>
+      <button id="fill-btn">Rellenar campos desde plantilla</button>
+      <button id="download-btn">Descargar JSON</button>
+      <button id="download-img-btn">Descargar Imagen</button>
+      <button id="save-db-btn">Guardar en BD</button>
+    </section>
+
+    <section class="form-area">
+      <form id="card-form" onsubmit="return false;">
+        <div class="left">
+          <label>Nombre<input id="Nombre" type="text" placeholder="" /></label>
+          <label>Tipo<input id="Tipo" type="text" placeholder="" /></label>
+          <label>Mitología<input id="Mitologia" type="text" placeholder="" /></label>
+          <label>Era<input id="Era" type="text" placeholder="" /></label>
+          <label>Coste<input id="Coste" type="text" placeholder="" /></label>
+        </div>
+        <div class="right">
+          <label>Fuerza<input id="Fuerza" type="text" placeholder="" /></label>
+          <label>Poder<input id="Poder" type="text" placeholder="" /></label>
+          <label>Claves<input id="Claves" type="text" placeholder="" /></label>
+          <label>URL Imagen<input id="URL-IMG" type="text" placeholder="" /></label>
+        </div>
+        <label class="wide">Texto - Habilidades<textarea id="Texto - Habilidades" rows="6" placeholder=""></textarea></label>
+      </form>
+      <div class="preview">
+        <h3>Vista previa</h3>
+        <canvas id="card-canvas" width="300" height="420" style="border:1px solid #333;background:#1b1b1b;border-radius:6px"></canvas>
+        <img id="preview-img" src="" alt="preview" style="display:none;"/>
+        <div id="preview-info">Seleccione una plantilla o rellene los campos.</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="main-footer"><div class="footer-content">© The Conjurer</div></footer>
+
+  <script src="crear_carta.js"></script>
+</body>
+</html>

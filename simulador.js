@@ -55,6 +55,14 @@ document.addEventListener('DOMContentLoaded', () => {
         cardsDrawnEl.textContent = drawnCount;
     }
 
+    // Actualizar el div deckStatus con el nombre del mazo
+    function updateDeckStatus(mazoName = null) {
+        const deckStatusName = document.getElementById('deckName');
+        if (deckStatusName) {
+            deckStatusName.textContent = mazoName ? `Mazo: ${mazoName}` : 'Sin mazo seleccionado';
+        }
+    }
+
     function setPantheonDisplay() {
         pantheonCardEl.innerHTML = '';
         const slot = document.createElement('div');
@@ -227,6 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.innerHTML = `<h4>${escapeHtml(mazo.nombre || 'Mazo sin nombre')}</h4><p>Mitología: ${escapeHtml(mazo.mitologia || 'Neutral')}</p>`;
                 item.addEventListener('click', () => {
                     loadMazoFromMazoObject(mazo);
+                    updateDeckStatus(mazo.nombre);
                     closeModal();
                 });
                 profileDecksEl.appendChild(item);
@@ -382,6 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     updateCounts();
                     setPantheonDisplay();
+                    updateDeckStatus(data.mazoName || data.deckName || 'Mazo importado');
                     alert('✅ Mazo importado: ' + destinyDeck.length + ' Designios, ' + godsDeck.length + ' Dioses, Panteón: ' + pantheon.name);
                 } else {
                     // Formato simple con designios/dioses/pantheon como IDs
@@ -461,6 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                         updateCounts();
                         setPantheonDisplay();
+                        updateDeckStatus(data.mazoName || 'Mazo importado');
                         alert('✅ Mazo importado: ' + destinyDeck.length + ' Designios, ' + godsDeck.length + ' Dioses');
                     })();
                 }
@@ -485,6 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
         handArea.innerHTML = '';
         updateCounts();
         setPantheonDisplay();
+        updateDeckStatus();
     });
 
     shuffleBtn.addEventListener('click', () => {
@@ -516,4 +528,5 @@ document.addEventListener('DOMContentLoaded', () => {
     drawnCount = 0;
     updateCounts();
     setPantheonDisplay();
+    updateDeckStatus(); // Mostrar estado del mazo
 });

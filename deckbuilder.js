@@ -2,7 +2,8 @@
         let allCardsData = []; // Todas las cartas cargadas del CSV
         let mazoCards = {};     // { cardId: count } - Cartas actualmente en el mazo
         let currentPantheon = null; // Mitología del Panteón seleccionado
-        const CSV_FILE_PATH = "GDM-CARTAS - Hoja 1 (4).csv"; 
+        const CSV_FILE_PATH = "GDM-CARTAS - Hoja 1 (4).csv";
+        let mazoAlreadyLoaded = false; // Flag para evitar cargar el mazo múltiples veces 
 
         // --- GUARDAR MAZO EN BD ---
         async function saveMazoToDatabase() {
@@ -13,7 +14,7 @@
             }
 
             const mazoNameInput = document.getElementById('mazo-name-input'); // Usando el ID que asumimos se usa en el HTML
-            const mazoName = mazoNameInput ? mazoNameInput.value.trim() : document.getElementById('deck-name').textContent || "Mi Mazo";
+            const mazoName = mazoNameInput ? mazoNameInput.value.trim() : document.getElementById('deck-name-display').textContent || "Mi Mazo";
             
             // Requisito 2: Nombre del mazo
             if (!mazoName || mazoName === 'Mi Mazo') {
@@ -93,7 +94,7 @@
                 currentPantheon = mazoData.currentPantheon || null;
 
                 // Restaurar nombre
-                document.getElementById('deck-name').textContent = mazo.nombre;
+                document.getElementById('deck-name-display').textContent = mazo.nombre;
                 localStorage.setItem('gdmDeckName', mazo.nombre);
 
                 // Re-renderizar
@@ -138,7 +139,7 @@ function exportMazoToJSON() {
     }
 
     const mazoData = { 
-        mazoName: document.getElementById('deck-name').textContent || "Mi Mazo", // Incluir el nombre del mazo
+        mazoName: document.getElementById('deck-name-display').textContent || "Mi Mazo", // Incluir el nombre del mazo
         mazoCards, 
         currentPantheon 
     };
@@ -147,7 +148,7 @@ function exportMazoToJSON() {
     const a = document.createElement("a");
     a.href = url;
     // Usar el nombre del mazo para el archivo, limpiando caracteres especiales
-    const mazoName = (document.getElementById('deck-name').textContent || "Mi Mazo").replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
+    const mazoName = (document.getElementById('deck-name-display').textContent || "Mi Mazo").replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
     a.download = `${mazoName}_gdm.json`;
     document.body.appendChild(a);
     a.click();
@@ -239,6 +240,9 @@ function importMazoFromJSON(event) {
                 localStorage.setItem('gdmDeckName', data.mazoName || data.deckName); // Guardar en local
             }
 
+            // Limpiar editingMazoId cuando se importa desde JSON (es un mazo nuevo)
+            sessionStorage.removeItem('editingMazoId');
+
             renderMazoList();
             renderPantheonInfo();
 
@@ -279,21 +283,16 @@ function importMazoFromJSON(event) {
             // Cargar cartas desde la base de datos (PHP)
             loadCardsFromDatabase();
             
-            // ❌ ELIMINADO: Listener que disparaba el filtrado instantáneamente (input y change)
-            
-            // ✅ NUEVO: Listener para que Enter en la búsqueda dispare los filtros (Mejora de UX)
+            // ✅ Event listeners para actualizar filtros en tiempo real
             const searchBar = document.getElementById('search-bar');
-            if (searchBar) {
-                searchBar.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault(); // Prevenir el envío de formulario si existe
-                        applyFilters();
-                    }
-                });
-            }
+            const typeFilter = document.getElementById('type-filter');
+            const mythologyFilter = document.getElementById('mythology-filter');
+            const eraFilter = document.getElementById('era-filter');
 
-            // Los desplegables de filtros (select) NO tienen listener, solo el botón "Aplicar Filtros" en el HTML.
-            // Si el botón tiene un onclick="applyFilters()" en el HTML, no es necesario un listener aquí.
+            if (searchBar) searchBar.addEventListener('input', applyFilters);
+            if (typeFilter) typeFilter.addEventListener('change', applyFilters);
+            if (mythologyFilter) mythologyFilter.addEventListener('change', applyFilters);
+            if (eraFilter) eraFilter.addEventListener('change', applyFilters);
 
             // --- NUEVO: Cargar y Guardar Nombre del Mazo ---
             setupMazoNameEditor();
@@ -301,6 +300,18 @@ function importMazoFromJSON(event) {
             // === NUEVO: SISTEMAS DE GUARDADO EN BD ===
             // Inicializar botón de guardado
             setupSaveMazoButton();
+
+            // === NUEVO: Botón Nuevo Mazo ===
+            const newMazoBtn = document.getElementById('new-mazo-btn');
+            if (newMazoBtn) {
+                newMazoBtn.addEventListener('click', createNewMazo);
+            }
+
+            // === Botón Exportar TTS ===
+            const exportTTSBtn = document.getElementById('export-tts-btn');
+            if (exportTTSBtn) {
+                exportTTSBtn.addEventListener('click', exportMazoToTTSImproved);
+            }
         });
         // --- FUNCIONES DE CARGA Y PARSEO ---
 
@@ -398,8 +409,12 @@ function importMazoFromJSON(event) {
                 applyFilters();
 
                 // Si venimos de perfil editando, cargar mazo ahora que tenemos las cartas
+                // Solo una vez (usa flag para evitar carga infinita)
                 const mazoId = sessionStorage.getItem('editingMazoId');
-                if (mazoId) await loadMazoFromDatabase();
+                if (mazoId && !mazoAlreadyLoaded) {
+                    mazoAlreadyLoaded = true;
+                    await loadMazoFromDatabase();
+                }
 
                 console.log('[loadCardsFromDatabase] Completado exitosamente');
             } catch (error) {
@@ -626,10 +641,12 @@ function importMazoFromJSON(event) {
             console.log('[renderGallery] Total cartas disponibles:', allCardsData.length);
             
             const filteredCards = allCardsData.filter(card => {
-                // 1. Filtro de búsqueda con validación de campos
+                // 1. Filtro de búsqueda con validación de campos (ahora incluye Clave)
+                const filterTermUpper = filterTerm.toUpperCase();
                 const searchTermMatch = !filterTerm || 
-                                        (card.Nombre && card.Nombre.toUpperCase().includes(filterTerm.toUpperCase())) ||
-                                        (card['Texto - Habilidades'] && card['Texto - Habilidades'].toUpperCase().includes(filterTerm.toUpperCase()));
+                                        (card.Nombre && card.Nombre.toUpperCase().includes(filterTermUpper)) ||
+                                        (card['Texto - Habilidades'] && card['Texto - Habilidades'].toUpperCase().includes(filterTermUpper)) ||
+                                        (card.Claves && card.Claves.toUpperCase().includes(filterTermUpper));
 
                 // 2. Filtro por Tipo
                 const typeMatch = !filterType || card.Tipo === filterType;
@@ -1024,7 +1041,12 @@ function importMazoFromJSON(event) {
         
         // --- NUEVO: Lógica para el nombre del Mazo ---
         function setupMazoNameEditor() {
-            const mazoNameEl = document.getElementById('deck-name');
+            const mazoNameEl = document.getElementById('deck-name-display');
+            const mazoIcon = document.getElementById('deck-name-icon');
+            const mazoControls = document.getElementById('deck-name-controls');
+            const mazoSave = document.getElementById('deck-name-save');
+            const mazoCancel = document.getElementById('deck-name-cancel');
+            
             if (!mazoNameEl) return;
 
             // 1. Cargar nombre guardado de localStorage
@@ -1033,31 +1055,109 @@ function importMazoFromJSON(event) {
                 mazoNameEl.textContent = savedName;
             }
 
-            // 2. Guardar nombre al dejar de editar (blur)
-            mazoNameEl.addEventListener('blur', () => {
+            // Función para entrar en modo edición
+            function enterEditMode() {
+                mazoNameEl.focus();
+                // Seleccionar todo el texto
+                const range = document.createRange();
+                range.selectNodeContents(mazoNameEl);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+                
+                // Mostrar controles
+                mazoIcon.style.display = 'none';
+                mazoControls.style.display = 'inline';
+            }
+
+            // Función para salir del modo edición y guardar
+            function saveChanges() {
                 const newName = mazoNameEl.textContent.trim();
                 if (newName) {
                     localStorage.setItem('gdmDeckName', newName);
                 } else {
-                    mazoNameEl.textContent = "Tu Mazo"; // Evitar que quede vacío
+                    mazoNameEl.textContent = "Tu Mazo";
                     localStorage.setItem('gdmDeckName', "Tu Mazo");
                 }
-            });
+                
+                // Ocultar controles
+                mazoIcon.style.display = 'inline';
+                mazoControls.style.display = 'none';
+            }
 
-            // 3. Limpiar pegado (paste) para evitar HTML
+            // Función para cancelar edición
+            function cancelEdit() {
+                const savedName = localStorage.getItem('gdmDeckName') || "Tu Mazo";
+                mazoNameEl.textContent = savedName;
+                
+                // Ocultar controles
+                mazoIcon.style.display = 'inline';
+                mazoControls.style.display = 'none';
+            }
+
+            // 2. Hacer clickeable el nombre y el icono
+            mazoNameEl.addEventListener('click', enterEditMode);
+            mazoIcon.addEventListener('click', enterEditMode);
+
+            // 3. Guardar cambios
+            mazoSave.addEventListener('click', saveChanges);
+            mazoCancel.addEventListener('click', cancelEdit);
+
+            // 4. Guardar nombre al dejar de editar (blur)
+            mazoNameEl.addEventListener('blur', saveChanges);
+
+            // 5. Limpiar pegado (paste) para evitar HTML
             mazoNameEl.addEventListener('paste', (e) => {
                 e.preventDefault();
                 const text = (e.clipboardData || window.clipboardData).getData('text/plain');
                 document.execCommand('insertText', false, text);
             });
 
-            // 4. Prevenir salto de línea con 'Enter' y terminar edición
+            // 6. Enter para guardar, Esc para cancelar
             mazoNameEl.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    mazoNameEl.blur(); // Termina la edición
+                    saveChanges();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelEdit();
                 }
             });
+
+            // 7. Prevenir caracteres especiales no deseados
+            mazoNameEl.addEventListener('keypress', (e) => {
+                const char = String.fromCharCode(e.which);
+                if (!/[a-zA-Z0-9\s\-:()ñáéíóúÁÉÍÓÚ]/.test(char)) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        // Crear un nuevo mazo vacío (limpiar todo)
+        function createNewMazo() {
+            if (Object.keys(mazoCards).length > 0) {
+                if (!confirm('¿Estás seguro de que deseas crear un nuevo mazo? Se perderán los cambios no guardados.')) {
+                    return;
+                }
+            }
+            
+            // Limpiar datos del mazo
+            mazoCards = {};
+            currentPantheon = null;
+            mazoAlreadyLoaded = false; // Resetear flag
+            
+            // Limpiar localStorage y sessionStorage
+            localStorage.removeItem('gdmDeckName');
+            sessionStorage.removeItem('editingMazoId');
+            
+            // Resetear nombre del mazo
+            document.getElementById('deck-name-display').textContent = 'Tu Mazo';
+            
+            // Renderizar cambios
+            renderMazoList();
+            renderPantheonInfo();
+            
+            alert('✅ Nuevo mazo creado. Listo para empezar.');
         }
 
         // --- FUNCIONES DE EXPORTACIÓN TTS ---
@@ -1173,7 +1273,7 @@ async function exportMazoToTTS() {
   const blob = await zip.generateAsync({ type: "blob" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  const mazoName = (document.getElementById('deck-name').textContent || "Mi Mazo").replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
+  const mazoName = (document.getElementById('deck-name-display').textContent || "Mi Mazo").replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
   link.download = `${mazoName}_tts.zip`;
   link.click();
 }        // Función para generar checklist de texto para un mazo
@@ -1190,252 +1290,216 @@ async function exportMazoToTTS() {
         }
 
         // Función mejorada para obtener URLs de imágenes de cartas
-        function getCardImageURLsImproved(mazoType) {
-            const cards = getCurrentMazoCardDetails()
-                .filter(c => getCardMazoType(c.Tipo) === mazoType);
+function getCardImageURLsImproved(mazoType) {
+    const cards = getCurrentMazoCardDetails()
+        .filter(c => getCardMazoType(c.Tipo) === mazoType);
 
-            const urls = [];
-            cards.forEach(card => {
-                // Usar la URL del CSV tal como está, igual que en galeria.html
-                const img = card['URL-IMG'] || 'https://placehold.co/300x420/3b0066/ffffff?text=' + encodeURIComponent(card.Nombre);
-                // Añadir tantas copias como tenga la carta en el mazo
-                for (let i = 0; i < card.count; i++) {
-                    urls.push(img);
-                }
-            });
-
-            return urls;
-        }        // Crea lienzo grande para TTS mejorado con especificaciones exactas
-        async function createMazoCanvasImproved(urls, cols = 10) {
-            if (!urls || urls.length === 0) return null;
-
-            const cardImgs = await Promise.all(urls.map(src => new Promise(resolve => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = () => {
-                    console.warn(`Error cargando imagen: ${src}`);
-                    resolve(null);
-                };
-                img.src = src;
-            })));
-
-            const validImgs = cardImgs.filter(img => img !== null);
-
-            if (validImgs.length === 0) return null;
-
-            // Especificaciones exactas para TTS: 250x350 píxeles por carta
-            const cardWidth = 250;
-            const cardHeight = 350;
-            const maxCards = 70; // Máximo 70 cartas
-            const rows = 7; // Exactamente 7 filas
-            
-            // Crear imagen de carta en blanco para rellenar espacios vacíos
-            const blankCardCanvas = document.createElement("canvas");
-            blankCardCanvas.width = cardWidth;
-            blankCardCanvas.height = cardHeight;
-            const blankCtx = blankCardCanvas.getContext("2d");
-            blankCtx.fillStyle = "#2a2a2a";
-            blankCtx.fillRect(0, 0, cardWidth, cardHeight);
-            blankCtx.strokeStyle = "#666";
-            blankCtx.lineWidth = 2;
-            blankCtx.strokeRect(1, 1, cardWidth-2, cardHeight-2);
-            
-            // Preparar array de imágenes con cartas en blanco si es necesario
-            const allImages = [...validImgs];
-            while (allImages.length < maxCards) {
-                allImages.push(blankCardCanvas);
-            }
-            
-            // Limitar a máximo 70 cartas
-            const finalImages = allImages.slice(0, maxCards);
-
-            const canvas = document.createElement("canvas");
-            canvas.width = cols * cardWidth; // 10 columnas * 250px = 2500px
-            canvas.height = rows * cardHeight; // 7 filas * 350px = 2450px
-            const ctx = canvas.getContext("2d");
-
-            finalImages.forEach((img, i) => {
-                const x = (i % cols) * cardWidth;
-                const y = Math.floor(i / cols) * cardHeight;
-                
-                if (img instanceof HTMLCanvasElement) {
-                    // Es una carta en blanco (canvas)
-                    ctx.drawImage(img, x, y);
-                } else {
-                    // Es una imagen de carta normal
-                    ctx.drawImage(img, x, y, cardWidth, cardHeight);
-                }
-            });
-
-            return canvas;
+    const urls = [];
+    cards.forEach(card => {
+        const img = card['URL-IMG'] || 'placeholder_card.jpg';
+        for (let i = 0; i < card.count; i++) {
+            urls.push(img);
         }
+    });
+    return urls;
+}
 
-        // Exporta el mazo como dos decksheets separadas en un ZIP con imágenes traseras y checklist
-        async function exportMazoToTTSImproved() {
-            try {
-                const godURLs = getCardImageURLsImproved("god");
-                const destinyURLs = getCardImageURLsImproved("destiny");
+async function createMazoCanvasImproved(urls, cols = 10) {
+    if (!urls || urls.length === 0) return null;
 
-                if (godURLs.length === 0 && destinyURLs.length === 0) {
-                    alert("⚠️ No hay cartas en el mazo para exportar.");
-                    return;
-                }
+    const cardImgs = await Promise.all(urls.map(src => new Promise(resolve => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => {
+            console.warn(`Error cargando imagen: ${src}, usando placeholder.`);
+            const placeholderImg = new Image();
+            placeholderImg.src = 'placeholder_card.jpg';
+            placeholderImg.onload = () => resolve(placeholderImg);
+            placeholderImg.onerror = () => resolve(null);
+        };
+        img.src = src;
+    })));
 
-                console.log(`Exportando ${godURLs.length} cartas de dioses y ${destinyURLs.length} cartas de designios`);
-                
-                // Crear ZIP
-                const zip = new JSZip();
-                
-                // Generar decksheet de dioses si hay cartas
-                if (godURLs.length > 0) {
-                    const godCanvas = await createMazoCanvasImproved(godURLs);
-                    if (godCanvas) {
-                        const godData = godCanvas.toDataURL("image/png").split(",")[1];
-                        zip.file("decksheet_dioses.png", godData, { base64: true });
-                    }
-                }
-                
-                // Generar decksheet de designios si hay cartas
-                if (destinyURLs.length > 0) {
-                    const destinyCanvas = await createMazoCanvasImproved(destinyURLs);
-                    if (destinyCanvas) {
-                        const destinyData = destinyCanvas.toDataURL("image/png").split(",")[1];
-                        zip.file("decksheet_designios.png", destinyData, { base64: true });
-                    }
-                }
-                
-                // Añadir imágenes traseras
-                try {
-                    // Cargar imagen trasera de dioses
-                    const traseraGodResponse = await fetch("GDM/Traseras/TraseraDioses.png");
-                    if (traseraGodResponse.ok) {
-                        const traseraGodBlob = await traseraGodResponse.blob();
-                        zip.file("TraseraDioses.png", traseraGodBlob);
-                    }
-                    
-                    // Cargar imagen trasera de designios
-                    const traseraDestinyResponse = await fetch("GDM/Traseras/TraseraDesignios.png");
-                    if (traseraDestinyResponse.ok) {
-                        const traseraDestinyBlob = await traseraDestinyResponse.blob();
-                        zip.file("TraseraDesignios.png", traseraDestinyBlob);
-                    }
-                } catch (error) {
-                    console.warn("No se pudieron cargar las imágenes traseras:", error);
-                }
-                
-                // Generar checklist del mazo completo
-                const mazoName = document.getElementById('deck-name').textContent || "Mi Mazo";
-                const checklist = generateCompleteChecklist();
-                zip.file(`${mazoName}.txt`, checklist);
-                
-                // Generar y descargar ZIP
-                const blob = await zip.generateAsync({ type: "blob" });
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(blob);
-                const cleanMazoName = mazoName.replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
-                a.download = `${cleanMazoName}_TTS.zip`;
-                a.click();
-                
-                alert(`✅ Pack TTS generado exitosamente!\n📋 Contenido:\n• Decksheet de dioses (${godURLs.length} cartas)\n• Decksheet de designios (${destinyURLs.length} cartas)\n• Imágenes traseras\n• Checklist: ${mazoName}.txt\n• Listo para Tabletop Simulator`);
+    const validImgs = cardImgs.filter(img => img !== null);
+    if (validImgs.length === 0) return null;
 
-            } catch (error) {
-                console.error("Error en exportación TTS:", error);
-                alert("❌ Error durante la exportación TTS: " + error.message);
-            }
-        }
-        
-        // Genera checklist completa del deck
-        function generateCompleteChecklist() {
-            const allCards = getCurrentMazoCardDetails();
-            let checklist = "";
-            
-            allCards.forEach(card => {
-                checklist += `x${card.count} - ${card.Nombre} (${card.Tipo})\n`;
-            });
-            
-            return checklist;
-        }
+    const cardWidth = 250;
+    const cardHeight = 350;
+    const maxCards = 70;
+    const rows = 7;
+    
+    const blankCardCanvas = document.createElement("canvas");
+    blankCardCanvas.width = cardWidth;
+    blankCardCanvas.height = cardHeight;
+    const blankCtx = blankCardCanvas.getContext("2d");
+    blankCtx.fillStyle = "#2a2a2a";
+    blankCtx.fillRect(0, 0, cardWidth, cardHeight);
+    
+    const allImages = [...validImgs];
+    while (allImages.length < maxCards) {
+        allImages.push(blankCardCanvas);
+    }
+    
+    const finalImages = allImages.slice(0, maxCards);
+    const canvas = document.createElement("canvas");
+    canvas.width = cols * cardWidth;
+    canvas.height = rows * cardHeight;
+    const ctx = canvas.getContext("2d");
 
-        // Configurar el botón de exportación TTS
-        document.addEventListener('DOMContentLoaded', () => {
-            const exportTTSBtn = document.getElementById('export-tts-btn');
-            if (exportTTSBtn) {
-                exportTTSBtn.addEventListener('click', exportMazoToTTSImproved);
-            }
-        });
+    finalImages.forEach((img, i) => {
+        const x = (i % cols) * cardWidth;
+        const y = Math.floor(i / cols) * cardHeight;
+        ctx.drawImage(img, x, y, cardWidth, cardHeight);
+    });
+    return canvas;
+}
 
-    async function exportCurrentDeckPDF() {
+async function exportMazoToTTSImproved() {
     try {
-        // Validar que haya cartas cargadas
-        if (!allCardsData || allCardsData.length === 0) {
-            alert('⚠️ Por favor, espera a que las cartas se carguen completamente');
+        if (!window.JSZip) {
+            alert('❌ Error: La librería JSZip no está cargada.');
             return;
         }
 
-        // Validar que el mazo no esté vacío
-        if (!mazoCards || Object.keys(mazoCards).length === 0) {
-            alert('⚠️ Tu mazo está vacío. Añade cartas antes de exportar.');
+        const godURLs = getCardImageURLsImproved("god");
+        const destinyURLs = getCardImageURLsImproved("destiny");
+
+        if (godURLs.length === 0 && destinyURLs.length === 0) {
+            alert("⚠️ No hay cartas en el mazo para exportar.");
             return;
         }
 
-        // Obtener nombre del mazo
-        const mazoNameElement = document.getElementById('deck-name');
-        const mazoName = mazoNameElement ? mazoNameElement.textContent.trim() : 'Mi Mazo';
-
-        // Preparar datos para el PDF
-        const deckCards = [];
-        for (const [cardId, cantidad] of Object.entries(mazoCards)) {
-            // Buscar la carta en allCardsData
-            const card = allCardsData.find(c => String(c.ID) === String(cardId));
-            
-            if (card) {
-                // Obtener URL de imagen (prioridad al CSV/BD)
-                let imageUrl = card['URL-IMG'] || card.imagen_url || '';
-                
-                // Fallback si no hay imagen
-                if (!imageUrl || imageUrl.includes('placeholder')) {
-                    const mitologia = (card.Mitologia || 'Neutrales').replace(/\s+/g, '_');
-                    const tipo = (card.Tipo || 'Panteón').replace(/\s+/g, '');
-                    const nombre = (card.Nombre || 'carta').replace(/\s+/g, '_');
-                    imageUrl = `GDM/${mitologia}/${tipo}/${nombre}.jpg`;
-                }
-
-                deckCards.push({
-                    nombre: card.Nombre,
-                    imagen: imageUrl,
-                    cantidad: cantidad,
-                    tipo: card.Tipo,
-                    mitologia: card.Mitologia
-                });
+        const zip = new JSZip();
+        
+        if (godURLs.length > 0) {
+            const godCanvas = await createMazoCanvasImproved(godURLs);
+            if (godCanvas) {
+                const godData = godCanvas.toDataURL("image/png").split(",")[1];
+                zip.file("decksheet_dioses.png", godData, { base64: true });
             }
         }
-
-        if (deckCards.length === 0) {
-            alert('⚠️ No se pudieron procesar las cartas del mazo');
-            return;
-        }
-
-        // Mostrar mensaje de progreso
-        const progressMsg = document.createElement('div');
-        progressMsg.innerHTML = '⏳ Generando PDF... No cierres la ventana';
-        progressMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#3b0066;color:#fff;padding:20px;border-radius:8px;z-index:9999;';
-        document.body.appendChild(progressMsg);
-
-        // Generar PDF
-        const resultado = await exportDeckToPDF(deckCards, mazoName);
         
-        // Limpiar mensaje
-        document.body.removeChild(progressMsg);
-
-        if (resultado) {
-            console.log(`✅ PDF exportado: ${mazoName}`);
-            alert('✅ PDF descargado correctamente');
+        if (destinyURLs.length > 0) {
+            const destinyCanvas = await createMazoCanvasImproved(destinyURLs);
+            if (destinyCanvas) {
+                const destinyData = destinyCanvas.toDataURL("image/png").split(",")[1];
+                zip.file("decksheet_designios.png", destinyData, { base64: true });
+            }
         }
+        
+        try {
+            const traseraGodResponse = await fetch("GDM/Traseras/TraseraDioses.png");
+            if (traseraGodResponse.ok) zip.file("TraseraDioses.png", await traseraGodResponse.blob());
+            
+            const traseraDestinyResponse = await fetch("GDM/Traseras/TraseraDesignios.png");
+            if (traseraDestinyResponse.ok) zip.file("TraseraDesignios.png", await traseraDestinyResponse.blob());
+        } catch (error) {
+            console.warn("No se pudieron cargar las imágenes traseras:", error);
+        }
+        
+        const mazoName = document.getElementById('deck-name-display').textContent || "Mi Mazo";
+        const checklist = generateCompleteChecklist();
+        zip.file(`${mazoName}.txt`, checklist);
+        
+        const blob = await zip.generateAsync({ type: "blob" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        const cleanMazoName = mazoName.replace(/[^a-zA-Z0-9\s\-_]/g, '').replace(/\s+/g, '_');
+        a.download = `${cleanMazoName}_TTS.zip`;
+        a.click();
+        
+        alert(`✅ Pack TTS generado exitosamente!`);
 
     } catch (error) {
-        console.error('Error al exportar PDF:', error);
-        alert('❌ Error al exportar: ' + error.message);
+        alert("❌ Error al exportar: " + error.message);
     }
+}
+
+// Genera checklist completa del deck
+function generateCompleteChecklist() {
+    const allCards = getCurrentMazoCardDetails();
+    let checklist = "";
+    
+    allCards.forEach(card => {
+        checklist += `x${card.count} - ${card.Nombre} (${card.Tipo})\n`;
+    });
+    
+    return checklist;
+}
+
+async function exportCurrentDeckPDF() {
+try {
+    // Validar que haya cartas cargadas
+    if (!allCardsData || allCardsData.length === 0) {
+        alert('⚠️ Por favor, espera a que las cartas se carguen completamente');
+        return;
+    }
+
+    // Validar que el mazo no esté vacío
+    if (!mazoCards || Object.keys(mazoCards).length === 0) {
+        alert('⚠️ Tu mazo está vacío. Añade cartas antes de exportar.');
+        return;
+    }
+
+    // Obtener nombre del mazo
+    const mazoNameElement = document.getElementById('deck-name-display');
+    const mazoName = mazoNameElement ? mazoNameElement.textContent.trim() : 'Mi Mazo';
+
+    // Preparar datos para el PDF
+    const deckCards = [];
+    for (const [cardId, cantidad] of Object.entries(mazoCards)) {
+        // Buscar la carta en allCardsData
+        const card = allCardsData.find(c => String(c.ID) === String(cardId));
+        
+        if (card) {
+            // Obtener URL de imagen (prioridad al CSV/BD)
+            let imageUrl = card['URL-IMG'] || card.imagen_url || '';
+            
+            // Fallback si no hay imagen
+            if (!imageUrl || imageUrl.includes('placeholder')) {
+                const mitologia = (card.Mitologia || 'Neutrales').replace(/\s+/g, '_');
+                const tipo = (card.Tipo || 'Panteón').replace(/\s+/g, '');
+                const nombre = (card.Nombre || 'carta').replace(/\s+/g, '_');
+                imageUrl = `GDM/${mitologia}/${tipo}/${nombre}.jpg`;
+            }
+
+            deckCards.push({
+                nombre: card.Nombre,
+                imagen: imageUrl,
+                cantidad: cantidad,
+                tipo: card.Tipo,
+                mitologia: card.Mitologia
+            });
+        }
+    }
+
+    if (deckCards.length === 0) {
+        alert('⚠️ No se pudieron procesar las cartas del mazo');
+        return;
+    }
+
+    // Mostrar mensaje de progreso
+    const progressMsg = document.createElement('div');
+    progressMsg.innerHTML = '⏳ Generando PDF... No cierres la ventana';
+    progressMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#3b0066;color:#fff;padding:20px;border-radius:8px;z-index:9999;';
+    document.body.appendChild(progressMsg);
+
+    // Generar PDF
+    const resultado = await exportDeckToPDF(deckCards, mazoName);
+    
+    // Limpiar mensaje
+    document.body.removeChild(progressMsg);
+
+    if (resultado) {
+        console.log(`✅ PDF exportado: ${mazoName}`);
+        alert('✅ PDF descargado correctamente');
+    }
+
+} catch (error) {
+    console.error('Error al exportar PDF:', error);
+    alert('❌ Error al exportar: ' + error.message);
+}
 }
 
 // === EXPORTACIÓN A PDF DESDE PERFIL (NO BORRAR) ===

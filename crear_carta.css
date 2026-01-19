@@ -1,0 +1,21 @@
+/* Estilos mínimos para la página de creación de cartas */
+body { font-family: Arial, Helvetica, sans-serif; background:#0f0f0f; color:#eaeaea; margin:0; }
+.main-header { background:#141414; padding:10px 16px; display:flex; align-items:center; }
+.logo-main { height:48px; }
+.main-nav { margin-left:20px; }
+.main-nav a { color:#ddd; margin-right:12px; text-decoration:none; }
+.main-nav a.active { font-weight:700; }
+.create-card-container { max-width:1100px; margin:24px auto; padding:12px; }
+.controls { margin-bottom:16px; display:flex; gap:8px; align-items:center; }
+.controls select, .controls button { padding:8px 10px; }
+.form-area { display:flex; gap:20px; align-items:flex-start; }
+.form-area form { flex:1; display:flex; gap:20px; }
+.form-area .left, .form-area .right { display:flex; flex-direction:column; gap:8px; width:50%; }
+label { display:block; font-size:0.9rem; }
+label input, label textarea { width:100%; padding:8px; margin-top:6px; background:#1b1b1b; color:#fff; border:1px solid #333; border-radius:4px; }
+label.wide { width:100%; }
+.preview { width:320px; background:#141414; padding:12px; border-radius:6px; text-align:center; }
+.preview img { width:300px; height:420px; object-fit:cover; border-radius:4px; border:1px solid #333; }
+.preview canvas { display:block; margin:8px auto; }
+.preview h3 { margin-top:0; }
+.main-footer { margin-top:24px; padding:12px; text-align:center; background:#0b0b0b; color:#888; }
