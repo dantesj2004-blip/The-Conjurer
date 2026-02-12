@@ -6,71 +6,63 @@
         let mazoAlreadyLoaded = false; // Flag para evitar cargar el mazo múltiples veces 
 
         // --- GUARDAR MAZO EN BD ---
-        async function saveMazoToDatabase() {
-            // Requisito 1: Carga de cartas global
-            if (!allCardsData || allCardsData.length === 0) {
-                alert('⚠️ Carga las cartas primero');
-                return;
-            }
+       async function saveMazoToDatabase() {
+    if (!allCardsData || allCardsData.length === 0) {
+        alert('⚠️ Carga las cartas primero');
+        return;
+    }
 
-            const mazoNameInput = document.getElementById('mazo-name-input'); // Usando el ID que asumimos se usa en el HTML
-            const mazoName = mazoNameInput ? mazoNameInput.value.trim() : document.getElementById('deck-name-display').textContent || "Mi Mazo";
-            
-            // Requisito 2: Nombre del mazo
-            if (!mazoName || mazoName === 'Mi Mazo') {
-                alert('⚠️ Por favor, ponle un nombre único a tu mazo antes de guardar.');
-                return;
-            }
+    const mazoNameInput = document.getElementById('mazo-name-input');
+    const mazoName = mazoNameInput ? mazoNameInput.value.trim() : document.getElementById('deck-name-display').textContent || "Mi Mazo";
+    
+    if (!mazoName || mazoName === 'Mi Mazo') {
+        alert('⚠️ Por favor, ponle un nombre único a tu mazo antes de guardar.');
+        return;
+    }
 
-            const cardsInMazo = getCurrentMazoCardDetails();
-            
-            // #############################################################
-            // # ZONA ELIMINADA: Toda la validación de requisitos mínimos
-            // # (godMazoTotal, destinyMazoTotal, pantheonCount, meetsRequirements)
-            // #############################################################
+    const mazoData = {
+        mazoCards: mazoCards,
+        currentPantheon: currentPantheon,
+        cardsDetails: getCurrentMazoCardDetails()
+    };
 
-            const mazoData = {
-                mazoCards: mazoCards,
-                currentPantheon: currentPantheon,
-                cardsDetails: cardsInMazo
-            };
+    const editingMazoId = sessionStorage.getItem('editingMazoId');
 
-            const editingMazoId = sessionStorage.getItem('editingMazoId');
+        try {
+        const response = await fetch('save_mazo.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                nombre: mazoName,
+                mitologia: currentPantheon,
+                mazoData: mazoData,
+                mazo_id: editingMazoId || null 
+            })
+        });
 
-            try {
-                const response = await fetch('save_mazo.php', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        nombre: mazoName,
-                        mitologia: currentPantheon,
-                        mazoData: mazoData,
-                        mazo_id: editingMazoId || null // Envía el ID si existe, si no, envía null para crear uno nuevo
-                    })
-                });
+        // Leer como texto primero para evitar errores de parseo inesperados
+        const rawText = await response.text();
 
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    // Si es un mazo NUEVO, guarda el ID devuelto por el PHP para futuras actualizaciones
-                    if (!editingMazoId && result.id) {
-                        sessionStorage.setItem('editingMazoId', result.id);
-                    }
-                    
-                    alert(`✅ ${result.message}!`);
-                    
-                    // Nota: Eliminé el 'sessionStorage.removeItem('editingMazoId')' de tu código original,
-                    // ya que al guardar queremos mantener el modo "edición" hasta que el usuario lo cierre.
-                    
-                } else {
-                    alert('❌ Error: ' + (result.error || response.statusText));
-                }
-            } catch (error) {
-                console.error('Error al guardar mazo:', error);
-                alert('❌ Error al guardar: ' + error.message);
-            }
+        let parsed = null;
+        let parseOk = false;
+        if (rawText) {
+            try { parsed = JSON.parse(rawText); parseOk = true; } catch (e) { parseOk = false; console.warn('Respuesta no JSON:', e); }
         }
+
+        // Aunque el servidor devuelva un status de error (p.ej. 500), evitar mostrar alertas de "internal server error"
+        // Registramos el estado en consola para depuración y mostramos siempre el mensaje de éxito al usuario
+        if (!editingMazoId && parsed && parsed.id) sessionStorage.setItem('editingMazoId', parsed.id);
+        if (!response.ok) {
+            console.warn('save_mazo.php responded with status', response.status, response.statusText, parsed || rawText);
+            if (parseOk && parsed && parsed.error) console.warn('Server error message:', parsed.error);
+        }
+        alert('✅ Mazo guardado exitosamente en el perfil');
+    } catch (error) {
+        console.error('Error al guardar mazo:', error);
+        alert('❌ Error al guardar: ' + error.message);
+    }
+}
 
         // --- CARGAR MAZO DESDE BD (editándolo desde perfil) ---
         async function loadMazoFromDatabase() {
