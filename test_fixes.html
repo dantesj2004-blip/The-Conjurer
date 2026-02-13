@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Sistema de Referencias en Cartas y Mazos</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f5f5 0%, #efefef 100%);
+        }
+        h1 { color: #8b4513; font-size: 2rem; margin-bottom: 10px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+        .subtitle { color: #666; font-size: 0.95rem; margin-bottom: 30px; }
+        .test-section {
+            background: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #8b4513;
+        }
+        .test-item {
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 4px;
+            background: #f9f9f9;
+            border-left: 3px solid #27ae60;
+        }
+        .test-item.warning {
+            border-left-color: #f39c12;
+            background: #fffbf0;
+        }
+        .test-item.error {
+            border-left-color: #e74c3c;
+            background: #ffe0e0;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-right: 10px;
+        }
+        .status-ok { background: #27ae60; color: white; }
+        .status-pending { background: #f39c12; color: white; }
+        .status-error { background: #e74c3c; color: white; }
+        .check { color: #27ae60; font-weight: bold; }
+        code { 
+            background: #f0f0f0; 
+            padding: 3px 8px; 
+            border-radius: 3px; 
+            font-family: 'Courier New', monospace;
+            color: #333;
+        }
+        h2 { color: #333; font-size: 1.3rem; margin: 20px 0 15px 0; border-bottom: 2px solid #8b4513; padding-bottom: 10px; }
+        h3 { color: #555; font-size: 1.05rem; margin-top: 15px; }
+        ul, ol { margin-left: 25px; line-height: 1.8; }
+        .step-number { 
+            display: inline-block; 
+            background: #8b4513; 
+            color: white; 
+            width: 28px; 
+            height: 28px; 
+            border-radius: 50%; 
+            text-align: center; 
+            line-height: 28px; 
+            font-weight: bold; 
+            margin-right: 8px;
+        }
+        .btn-test {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #8b4513;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn-test:hover { background: #6b3410; }
+        .test-result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f4e8;
+            border: 1px solid #27ae60;
+            border-radius: 4px;
+            display: none;
+        }
+        .test-result.show { display: block; }
+        .endpoint-box {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background: #f0f0f0; font-weight: bold; }
+        tr:hover { background: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <h1>Test - Sistema Completo de Referencias</h1>
+    <p class="subtitle">Guía para validar que cartas y mazos se muestran y se pueden importar correctamente</p>
+
+    <div class="test-section">
+        <h2>1. Verificar Base de Datos</h2>
+        <div class="test-item">
+            <h3>Base de Datos: the_conjurer</h3>
+            <p><strong>Tablas requeridas:</strong></p>
+            <ul>
+                <li><code>cartas</code> - Con campos: ID, Nombre, Tipo, Mitologia, Fuerza, Coste, <strong>Imagen</strong>, Era</li>
+                <li><code>noticias</code> - Con campos: id, titulo, fecha, contenido, imagen_url</li>
+                <li><code>noticia_referencias</code> - Referencias de cartas/mazos en noticias</li>
+                <li><code>mazos</code> - Con campos: id, usuario_id, nombre, mitologia, mazo_data</li>
+                <li><code>usuarios</code> - Con campo es_admin</li>
+            </ul>
+            <p style="margin-top: 10px;">
+                <span class="status-badge status-ok">SQL</span> Ejecuta en PhpMyAdmin:
+            </p>
+            <div class="endpoint-box">
+                DESCRIBE cartas;<br>
+                SELECT COUNT(*) FROM cartas;
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Verificar Imágenes de Cartas</h2>
+        <div class="test-item">
+            <h3>Ruta de Imágenes</h3>
+            <p><strong>Estructura esperada:</strong></p>
+            <div class="endpoint-box">
+                /The-Conjurer/GDM/Era I-IV/Tipo/NombreCarta.jpg<br>
+                /The-Conjurer/GDM/Era II/Tipo/NombreCarta.jpg<br>
+                /The-Conjurer/GDM/Era III/Tipo/NombreCarta.jpg
+            </div>
+            <p style="margin-top: 10px;">
+                <span class="status-badge status-pending">CHECK</span> En BD tabla <code>cartas</code>, campo <code>Imagen</code> debe contener:
+            </p>
+            <div class="endpoint-box">
+                /GDM/Era I-IV/Acciones/CartaNombre.jpg
+            </div>
+            <p style="margin-top: 10px; color: #666;">
+                El endpoint <code>get_all_cards_list.php</code> convierte automáticamente a:<br>
+                <code>/The-Conjurer/GDM/Era I-IV/Acciones/CartaNombre.jpg</code>
+            </p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Test de Búsqueda de Cartas en Admin</h2>
+        <div class="test-item">
+            <h3><span class="step-number">1</span>Abre Admin Panel</h3>
+            <p><a href="admin_panel.html" class="btn-test" target="_blank">Abrir Admin Panel</a></p>
+            <p style="color: #666; font-size: 0.9rem; margin-top: 5px;">Debe estar logueado como admin</p>
+        </div>
+        <div class="test-item">
+            <h3><span class="step-number">2</span>Crear o Editar Noticia</h3>
+            <p>Click "Crear Noticia" o editar una existente</p>
+            <p><span class="check">✓</span> Debes ver sección "Insertar Cartas"</p>
+        </div>
+        <div class="test-item">
+            <h3><span class="step-number">3</span>Buscar Carta</h3>
+            <p>En campo de búsqueda, escribe: <code>fuego</code>, <code>mago</code>, o cualquier nombre de carta</p>
+            <p><span class="check">✓</span> Resultados aparecen al escribir 2+ caracteres</p>
+            <p><span class="check">✓</span> Máximo 30 cartas se muestran</p>
+        </div>
+        <div class="test-item">
+            <h3><span class="step-number">4</span>Click en Resultado</h3>
+            <p>Click en una carta de la lista</p>
+            <p><span class="check">✓</span> Item se destaca con fondo <span style="background: #e8f4e8; padding: 2px 6px; border-radius: 2px;">verde</span></p>
+            <p><span class="check">✓</span> Aparece "✓ CARTA SELECCIONADA" en preview derecho</p>
+        </div>
+        <div class="test-item error">
+            <h3><span class="step-number">5</span>Verificar Imagen</h3>
+            <p><span class="status-badge status-pending">CRÍTICO</span> En el preview debe aparecer la imagen de la carta</p>
+            <p><strong>Si NO aparece:</strong></p>
+            <ul>
+                <li>Abre Consola (F12) → Console</li>
+                <li>Busca logs: "Imagen URL: ..." y "Imagen no disponible"</li>
+                <li>Verifica ruta en BD: <code>SELECT Imagen FROM cartas LIMIT 1;</code></li>
+                <li>Intenta cargar imagen directa en navegador</li>
+            </ul>
+        </div>
+        <div class="test-item">
+            <h3><span class="step-number">6</span>Agregar a Noticia</h3>
+            <p>Click botón "Agregar a Noticia"</p>
+            <p><span class="check">✓</span> Carta aparece en grid inferior</p>
+            <p><span class="check">✓</span> Grid muestra imagen y datos de la carta</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Test de Mazo en Noticia</h2>
+        <div class="test-item">
+            <h3><span class="step-number">1</span>Agregar Mazo</h3>
+            <p>En admin panel, sección "Insertar Mazo":</p>
+            <p><span class="check">✓</span> Dropdown muestra tus mazos existentes</p>
+            <p><span class="check">✓</span> Click en uno para ver preview</p>
+        </div>
+        <div class="test-item">
+            <h3><span class="step-number">2</span>Mazo Preview</h3>
+            <p>En preview debe mostrarse:</p>
+            <ul>
+                <li class="check">✓ Nombre del mazo (negrita)</li>
+                <li class="check">✓ Mitología</li>
+                <li class="check">✓ Total de cartas</li>
+                <li class="check">✓ Banner "✓ MAZO SELECCIONADO"</li>
+            </ul>
+        </div>
+        <div class="test-item">
+            <h3><span class="step-number">3</span>Guardar Noticia</h3>
+            <p>Agrega referencia y guarda noticia</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Test de Notica Pública - Ver Referencias</h2>
+        <div class="test-item">
+            <h3><span class="step-number">1</span>Abrir Noticia</h3>
+            <p><a href="noticias.html" class="btn-test" target="_blank">Ir a Noticias</a></p>
+            <p>Click en una noticia que creaste con referencias</p>
+        </div>
+        <div class="test-item">
+            <h3><span class="step-number">2</span>Sección Cartas Mencionadas</h3>
+            <p>Scroll hacia abajo</p>
+            <p><span class="check">✓</span> Debe haber título "Cartas Mencionadas"</p>
+            <p><span class="check">✓</span> Grid con cartas (imagen, nombre, mitología, coste)</p>
+            <p><span class="check">✓</span> Imágenes se cargan correctamente</p>
+            <p><span class="check">✓</span> Hover: zoom 1.05x efecto visual</p>
+        </div>
+        <div class="test-item error">
+            <h3><span class="step-number">3</span>Sección Mazos Mencionados</h3>
+            <p><span class="status-badge status-pending">CRÍTICO</span> Debe haber título "Mazos Mencionados"</p>
+            <p><strong>Contenido del Mazo:</strong></p>
+            <ul>
+                <li>Header con: Nombre mazo | Mitología | Total cartas</li>
+                <li>Lista scrollable de cartas con:
+                    <ul>
+                        <li>Cantidad en verde: <strong style="color: #27ae60;">x1, x2, x3</strong></li>
+                        <li>Nombre de la carta</li>
+                        <li>Mitología (gris)</li>
+                        <li>Imagen miniatura 40x56px a la derecha</li>
+                    </ul>
+                </li>
+                <li>Botón "Guardar Mazo en Mi Perfil" en verde</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>6. Test - Importar Mazo</h2>
+        <div class="test-item">
+            <h3><span class="step-number">1</span>Estar Logueado</h3>
+            <p>Verifica que tu sesión esté activa (Usuario mostrado arriba)</p>
+            <p><strong>Si NO:</strong> <a href="auth.html" class="btn-test">Ir a Login</a></p>
+        </div>
+        <div class="test-item">
+            <h3><span class="step-number">2</span>Click Botón Importar</h3>
+            <p>En noticia con mazo, click en "Guardar Mazo en Mi Perfil"</p>
+            <p><span class="check">✓</span> Sistema verifica sesión</p>
+            <p><span class="check">✓</span> Obtiene datos del mazo desde servidor</p>
+            <p><span class="check">✓</span> Guarda a tu perfil</p>
+        </div>
+        <div class="test-item">
+            <h3><span class="step-number">3</span>Feedback Visual</h3>
+            <p>Botón debe cambiar a:</p>
+            <p style="color: #95a5a6; font-weight: bold;">Mazo Guardado!</p>
+            <p><span class="check">✓</span> Luego vuelve a normal después de 2s</p>
+            <p><span class="check">✓</span> Aparece alert: "Mazo guardado exitosamente!"</p>
+        </div>
+        <div class="test-item">
+            <h3><span class="step-number">4</span>Verificar Guardado</h3>
+            <p>Ve a tu Perfil → Mazos</p>
+            <p><span class="check">✓</span> Nuevo mazo aparece con nombre "(Importado)"</p>
+            <p><span class="check">✓</span> Puedes verlo en Deckbuilder</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>7. Endpoints - Validación Técnica</h2>
+        <table>
+            <tr>
+                <th>Método</th>
+                <th>Endpoint</th>
+                <th>Descripción</th>
+                <th>Respuesta Esperada</th>
+            </tr>
+            <tr>
+                <td>GET</td>
+                <td><code>/get_all_cards_list.php</code></td>
+                <td>Lista de todas las cartas</td>
+                <td><code>{"cartas": [{id, nombre, imagen, ...}]}</code></td>
+            </tr>
+            <tr>
+                <td>GET</td>
+                <td><code>/get_noticia_referencias_detalles.php?noticia_id=X</code></td>
+                <td>Referencias de una noticia</td>
+                <td><code>{"referencias": [...], "cartas": {...}, "mazos": {...}}</code></td>
+            </tr>
+            <tr>
+                <td>GET</td>
+                <td><code>/get_mazo_para_importar.php?mazo_id=X</code></td>
+                <td>Datos completos del mazo</td>
+                <td><code>{"id, nombre, mitologia, mazo_data}</code></td>
+            </tr>
+            <tr>
+                <td>POST</td>
+                <td><code>/save_imported_mazo.php</code></td>
+                <td>Guardar mazo a perfil</td>
+                <td><code>{"success": true, "mazo_id": X}</code></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="test-section">
+        <h2>8. Debuggeo en Console</h2>
+        <div class="test-item">
+            <h3>Abrir Console (F12)</h3>
+            <p>Esperarás ver logs como:</p>
+            <div class="endpoint-box" style="color: #27ae60;">
+                Cartas cargadas: 350<br>
+                Mostrando preview de carta: {...}<br>
+                Imagen URL: /The-Conjurer/GDM/...  Tiene imagen: true<br>
+                Imagen cargada exitosamente: /The-Conjurer/GDM/...<br>
+                Referencias cargadas: {...}
+            </div>
+        </div>
+        <div class="test-item error">
+            <h3>Si ves errores:</h3>
+            <ul>
+                <li><code>Error 403</code> → Usuario no es admin</li>
+                <li><code>no hay cartas cargadas</code> → BD vacía o error en fetch</li>
+                <li><code>Imagen no disponible</code> → Ruta de imagen incorrecta en BD</li>
+                <li><code>CORS error</code> → Problema de servidor</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section" style="background: #fffbf0; border-left-color: #f39c12;">
+        <h2>Resumen de Cambios Realizados</h2>
+        <ul style="line-height: 2;">
+            <li><span class="check">✓</span> Búsqueda de cartas muestra todas al abrir, luego filtra</li>
+            <li><span class="check">✓</span> Preview de cartas carga imagen correctamente</li>
+            <li><span class="check">✓</span> Noticia pública muestra cartas referenciadas</li>
+            <li><span class="check">✓</span> Noticia pública muestra mazos con lista de cartas</li>
+            <li><span class="check">✓</span> Usuarios pueden importar mazos desde noticia</li>
+            <li><span class="check">✓</span> Sistema robusto con manejo de errores</li>
+            <li><span class="check">✓</span> URLs de imágenes normalizadas automáticamente</li>
+            <li><span class="check">✓</span> Feedback visual claro en todas las operaciones</li>
+        </ul>
+    </div>
+
+</body>
+</html>
+

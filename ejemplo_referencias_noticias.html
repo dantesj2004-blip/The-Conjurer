@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejemplo - Visualización de Referencias en Noticias</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0015;
+            color: #e0e0e0;
+            font-family: 'Montserrat', sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .referencias-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(59, 0, 102, 0.2);
+            border: 2px solid #c873c4;
+            border-radius: 8px;
+        }
+
+        .referencias-section h3 {
+            color: #c873c4;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .referencias-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .referencia-card {
+            background: linear-gradient(135deg, #260050, #1a0033);
+            border: 2px solid #c873c4;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .referencia-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(200, 115, 196, 0.4);
+        }
+
+        .referencia-card.carta .card-image {
+            height: 200px;
+            overflow: hidden;
+            background: #1a0033;
+        }
+
+        .referencia-card.carta .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .referencia-card.mazo {
+            padding: 15px;
+        }
+
+        .card-content {
+            padding: 15px;
+        }
+
+        .card-title {
+            color: #c873c4;
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .card-meta {
+            color: #b0a0b0;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .card-meta div {
+            margin: 4px 0;
+        }
+
+        .card-meta strong {
+            color: #e0e0e0;
+        }
+
+        .tipos-list {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(200, 115, 196, 0.3);
+        }
+
+        .tipo-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 4px 0;
+            font-size: 0.8rem;
+        }
+
+        .tipo-nombre {
+            color: #e0e0e0;
+        }
+
+        .tipo-cantidad {
+            background: rgba(200, 115, 196, 0.3);
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-weight: 600;
+            color: #c873c4;
+        }
+
+        .loading {
+            text-align: center;
+            color: #b0a0b0;
+            padding: 20px;
+        }
+
+        .error {
+            color: #ff6b6b;
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid #ff6b6b;
+            border-radius: 4px;
+        }
+
+        .empty {
+            color: #b0a0b0;
+            text-align: center;
+            padding: 30px;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .referencias-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="color: #c873c4; margin-bottom: 20px;">Ejemplo: Visualización de Referencias en Noticias</h1>
+        
+        <div id="referenciasContainer"></div>
+    </div>
+
+    <script>
+        // Obtener noticia_id de la URL
+        const params = new URLSearchParams(window.location.search);
+        const noticia_id = params.get('noticia_id') || 1;
+
+        async function loadReferencias() {
+            const container = document.getElementById('referenciasContainer');
+            
+            try {
+                container.innerHTML = '<div class="loading">Cargando referencias...</div>';
+
+                const response = await fetch(`get_noticia_referencias_detalles.php?noticia_id=${noticia_id}`);
+                if (!response.ok) {
+                    throw new Error('Error al cargar datos');
+                }
+
+                const data = await response.json();
+
+                if (!data.referencias || data.referencias.length === 0) {
+                    container.innerHTML = '<div class="empty">No hay referencias para esta noticia</div>';
+                    return;
+                }
+
+                renderizarReferencias(data);
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = `<div class="error">Error al cargar referencias: ${error.message}</div>`;
+            }
+        }
+
+        function renderizarReferencias(data) {
+            const container = document.getElementById('referenciasContainer');
+            let html = '';
+
+            // Separar por tipo
+            const cartas = data.referencias.filter(r => r.tipo === 'carta');
+            const mazos = data.referencias.filter(r => r.tipo === 'mazo');
+
+            // Sección de Cartas
+            if (cartas.length > 0) {
+                html += '<div class="referencias-section">';
+                html += '<h3>Cartas Mencionadas</h3>';
+                html += '<div class="referencias-grid">';
+
+                cartas.forEach(ref => {
+                    const carta = data.cartas[ref.referencia_id];
+                    if (!carta) return;
+
+                    const tieneImagen = carta.Imagen && carta.Imagen.trim() !== '';
+                    html += `
+                        <div class="referencia-card carta">
+                            ${tieneImagen ? `<div class="card-image"><img src="${carta.Imagen}" alt="${carta.Nombre}" onerror="this.src='https://via.placeholder.com/180x200?text=Sin+imagen'"></div>` : ''}
+                            <div class="card-content">
+                                <div class="card-title">${carta.Nombre}</div>
+                                <div class="card-meta">
+                                    <div><strong>Tipo:</strong> ${carta.Tipo}</div>
+                                    <div><strong>Mito:</strong> ${carta.Mitologia}</div>
+                                    ${carta.Fuerza ? `<div><strong>Fuerza:</strong> ${carta.Fuerza}</div>` : ''}
+                                    ${carta.Coste ? `<div><strong>Coste:</strong> ${carta.Coste}</div>` : ''}
+                                    ${carta.Era ? `<div><strong>Era:</strong> ${carta.Era}</div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div></div>';
+            }
+
+            // Sección de Mazos
+            if (mazos.length > 0) {
+                html += '<div class="referencias-section">';
+                html += '<h3>Mazos Mencionados</h3>';
+                html += '<div class="referencias-grid">';
+
+                mazos.forEach(ref => {
+                    const mazo = data.mazos[ref.referencia_id];
+                    if (!mazo) return;
+
+                    let tiposHtml = '';
+                    if (mazo.tipos_cartas && Object.keys(mazo.tipos_cartas).length > 0) {
+                        tiposHtml += '<div class="tipos-list">';
+                        Object.entries(mazo.tipos_cartas).forEach(([tipo, cantidad]) => {
+                            tiposHtml += `
+                                <div class="tipo-item">
+                                    <span class="tipo-nombre">${tipo}:</span>
+                                    <span class="tipo-cantidad">${cantidad}</span>
+                                </div>
+                            `;
+                        });
+                        tiposHtml += '</div>';
+                    }
+
+                    html += `
+                        <div class="referencia-card mazo">
+                            <div class="card-title">${mazo.nombre}</div>
+                            <div class="card-meta">
+                                <div><strong>Mitologia:</strong> ${mazo.mitologia}</div>
+                                <div><strong>Total Cartas:</strong> ${mazo.total_cartas}</div>
+                                ${tiposHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div></div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Cargar referencias al iniciar
+        loadReferencias();
+    </script>
+</body>
+</html>

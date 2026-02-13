@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test: Cargas de Cartas</title>
+</head>
+<body style="background: #0a0015; color: #e0e0e0; font-family: monospace; padding: 20px;">
+    <h2>Test de Cargas del Sistema de Referencias</h2>
+    
+    <h3>Estado de Cartas:</h3>
+    <div id="cartasStatus" style="background: #1a0033; padding: 10px; border: 1px solid #555; border-radius: 4px; margin: 10px 0;">Cargando...</div>
+    
+    <h3>Estado de Mazos:</h3>
+    <div id="mazosStatus" style="background: #1a0033; padding: 10px; border: 1px solid #555; border-radius: 4px; margin: 10px 0;">Cargando...</div>
+    
+    <h3>Test de Búsqueda:</h3>
+    <input type="text" id="searchTest" placeholder="Busca una carta..." style="padding: 8px; width: 100%; max-width: 400px; background: #1a0033; color: #e0e0e0; border: 1px solid #555; border-radius: 4px; margin: 10px 0;">
+    <div id="resultados" style="background: #1a0033; padding: 10px; border: 1px solid #555; border-radius: 4px; margin: 10px 0; max-height: 300px; overflow-y: auto;"></div>
+
+    <script>
+        let allCartas = [];
+        let allMazos = [];
+
+        async function testCartas() {
+            try {
+                const response = await fetch('get_all_cards_list.php', { credentials: 'same-origin' });
+                const data = await response.json();
+                
+                allCartas = data.cartas || [];
+                
+                document.getElementById('cartasStatus').innerHTML = `
+                    <strong>Status:</strong> OK (${allCartas.length} cartas cargadas)<br>
+                    <strong>Primeras 3:</strong><br>
+                    ${allCartas.slice(0, 3).map(c => `${c.nombre} (${c.tipo} - ${c.mitologia})`).join('<br>')}
+                `;
+            } catch (e) {
+                document.getElementById('cartasStatus').innerHTML = `<strong style="color: #ff6b6b;">ERROR:</strong> ${e.message}`;
+            }
+        }
+
+        async function testMazos() {
+            try {
+                const response = await fetch('get_user_mazos_for_noticia.php', { credentials: 'same-origin' });
+                const data = await response.json();
+                
+                allMazos = data.mazos || [];
+                
+                document.getElementById('mazosStatus').innerHTML = `
+                    <strong>Status:</strong> OK (${allMazos.length} mazos cargados)<br>
+                    <strong>Primeros 3:</strong><br>
+                    ${allMazos.slice(0, 3).map(m => `${m.nombre} (${m.total_cartas} cartas - ${m.mitologia})`).join('<br>')}
+                `;
+            } catch (e) {
+                document.getElementById('mazosStatus').innerHTML = `<strong style="color: #ff6b6b;">ERROR:</strong> ${e.message}`;
+            }
+        }
+
+        document.getElementById('searchTest').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const resultDiv = document.getElementById('resultados');
+            
+            if (query.length < 2) {
+                resultDiv.innerHTML = '<div style="color: #b0a0b0;">Escribe al menos 2 caracteres...</div>';
+                return;
+            }
+            
+            const results = allCartas.filter(c => 
+                c.nombre.toLowerCase().includes(query) ||
+                c.tipo.toLowerCase().includes(query) ||
+                c.mitologia.toLowerCase().includes(query)
+            );
+            
+            if (results.length === 0) {
+                resultDiv.innerHTML = '<div style="color: #ff6b6b;">No hay coincidencias</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = results.map(c => `
+                <div style="padding: 8px; border-bottom: 1px solid #555;">
+                    <strong>${c.nombre}</strong><br>
+                    <small>${c.tipo} - ${c.mitologia} (Fuerza: ${c.fuerza || '-'}, Coste: ${c.coste || '-'})</small>
+                </div>
+            `).join('');
+        });
+
+        // Ejecutar tests al cargar
+        testCartas();
+        testMazos();
+    </script>
+</body>
+</html>

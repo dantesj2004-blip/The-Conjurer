@@ -50,6 +50,21 @@
                 <h1 id="detail-title" class="news-detail-main-title"></h1>
                 
                 <div id="detail-content" class="news-detail-main-content"></div>
+                
+                <!-- Referencias (Cartas y Mazos) -->
+                <div id="referencesSection" style="display: none; margin-top: 40px; padding-top: 30px; border-top: 2px solid #ddd;">
+                    <!-- Cartas Mencionadas -->
+                    <div id="cartasReferencesContainer" style="display: none; margin-bottom: 40px;">
+                        <h2 style="color: #8b4513; font-size: 1.5rem; margin-bottom: 20px; border-bottom: 2px solid #8b4513; padding-bottom: 10px;">Cartas Mencionadas</h2>
+                        <div id="cartasGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;"></div>
+                    </div>
+                    
+                    <!-- Mazos Mencionados -->
+                    <div id="mazosReferencesContainer" style="display: none; margin-bottom: 40px;">
+                        <h2 style="color: #8b4513; font-size: 1.5rem; margin-bottom: 20px; border-bottom: 2px solid #8b4513; padding-bottom: 10px;">Mazos Mencionados</h2>
+                        <div id="mazosGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;"></div>
+                    </div>
+                </div>
             </div>
         </article>
 
@@ -94,12 +109,187 @@
 
             if (currentNewsId) {
                 await loadNewsDetail(currentNewsId);
+                await loadReferences(currentNewsId);
                 await loadRelatedNews(currentNewsId);
             } else {
                 // Si no hay ID, redirigir a noticias
                 window.location.href = 'noticias.html';
             }
         });
+
+        async function loadReferences(newsId) {
+            try {
+                const response = await fetch(`/The-Conjurer/get_noticia_referencias_detalles.php?noticia_id=${newsId}`);
+                if (!response.ok) throw new Error('Error fetching references');
+                
+                const data = await response.json();
+                
+                if (!data.referencias || data.referencias.length === 0) {
+                    return; // No hay referencias
+                }
+                
+                let hasCartas = false;
+                let hasMazos = false;
+                
+                // Renderizar Cartas
+                const cartasRefs = data.referencias.filter(ref => ref.tipo === 'carta');
+                if (cartasRefs.length > 0 && data.cartas) {
+                    hasCartas = true;
+                    let cartasHtml = '';
+                    
+                    cartasRefs.forEach(ref => {
+                        const carta = data.cartas[ref.referencia_id];
+                        if (carta) {
+                            const imagenUrl = carta.Imagen || '';
+                            cartasHtml += `
+                                <div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden; background: #f9f9f9; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                    <div style="width: 100%; aspect-ratio: 0.7; overflow: hidden; background: #e0e0e0;">
+                                        <img src="${imagenUrl}" alt="${carta.Nombre}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22280%22%3E%3Crect fill=%22%23ccc%22 width=%22200%22 height=%22280%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22 font-size=%2214%22%3ESin imagen%3C/text%3E%3C/svg%3E'">
+                                    </div>
+                                    <div style="padding: 10px;">
+                                        <h4 style="margin: 0 0 5px 0; font-size: 0.95rem; color: #333; font-weight: bold;">${carta.Nombre}</h4>
+                                        <p style="margin: 0; font-size: 0.8rem; color: #666;">
+                                            ${carta.Mitologia || 'Desconocida'} • <strong>Coste:</strong> ${carta.Coste || '?'}
+                                        </p>
+                                        ${carta.Fuerza ? `<p style="margin: 5px 0 0 0; font-size: 0.8rem; color: #8b4513;"><strong>Fuerza:</strong> ${carta.Fuerza}</p>` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                    
+                    document.getElementById('cartasGrid').innerHTML = cartasHtml;
+                    document.getElementById('cartasReferencesContainer').style.display = 'block';
+                }
+                
+                // Renderizar Mazos
+                const mazosRefs = data.referencias.filter(ref => ref.tipo === 'mazo');
+                if (mazosRefs.length > 0 && data.mazos) {
+                    hasMazos = true;
+                    let mazosHtml = '';
+                    
+                    mazosRefs.forEach(ref => {
+                        const mazo = data.mazos[ref.referencia_id];
+                        if (mazo) {
+                                    // intentar obtener imagen de panteón desde las cartas del mazo
+                                    let pantheonImg = null;
+                                    if (Array.isArray(mazo.cartas)) {
+                                        const pant = mazo.cartas.find(c => (c.tipo || '').toString().toLowerCase().includes('panteon') || (c.tipo || '').toString().toLowerCase().includes('panteón'));
+                                        if (pant) pantheonImg = pant.imagen || null;
+                                    }
+                            // Generar lista de cartas del mazo
+                            let cartasListaHtml = '';
+                            if (mazo.cartas && mazo.cartas.length > 0) {
+                                cartasListaHtml = '<div style="max-height: 400px; overflow-y: auto; background: white; padding: 15px; margin-bottom: 15px; border-radius: 4px; border: 1px solid #e0e0e0;">';
+                                mazo.cartas.forEach(carta => {
+                                    cartasListaHtml += `
+                                        <div style="padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.95rem;">
+                                            <span style="color: #8b4513; font-weight: bold;">X${carta.cantidad}</span>
+                                            <span style="color: #333; font-weight: 500; margin: 0 8px;">-</span>
+                                            <span style="color: #333;">${carta.nombre}</span>
+                                            <span style="color: #8b4513; margin-left: 8px;">(${carta.tipo})</span>
+                                        </div>
+                                    `;
+                                });
+                                cartasListaHtml += '</div>';
+                            }
+                            
+                            mazosHtml += `
+                                <div style="border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                                    <div style="background: linear-gradient(135deg,#3b0066 0%,#6a0dad 100%); color: white; padding: 18px; display: flex; align-items: center; gap: 14px;">
+                                        ${pantheonImg ? `<div style="flex-shrink:0;"><img src="${pantheonImg}" alt="Panteón" style="width:56px;height:78px;object-fit:cover;transform:rotate(90deg);border-radius:4px;border:1px solid rgba(0,0,0,0.08);"></div>` : ''}
+                                        <div style="flex: 1;">
+                                            <h3 style="margin: 0 0 5px 0; font-size: 1.25rem; font-weight: bold;">${mazo.nombre}</h3>
+                                            <p style="margin: 0; font-size: 0.95rem; opacity: 0.95;">
+                                                ${mazo.mitologia} • ${mazo.total_cartas} cartas
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 18px; background: #fff;">
+                                        <h4 style="margin: 0 0 15px 0; color: #6a0dad; font-size: 1rem; font-weight: bold; border-bottom: 2px solid #6a0dad; padding-bottom: 10px;">Cartas del Mazo:</h4>
+                                        ${cartasListaHtml}
+                                        <button type="button" onclick="importarMazo(${ref.referencia_id}, '${mazo.nombre.replace(/'/g, "\\'")}', this)" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #6a0dad 0%, #27ae60 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 0.95rem; transition: all 0.25s; box-shadow: 0 2px 6px rgba(0,0,0,0.08);">
+                                            Guardar Mazo en Mi Perfil
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                    
+                    document.getElementById('mazosGrid').innerHTML = mazosHtml;
+                    document.getElementById('mazosReferencesContainer').style.display = 'block';
+                }
+                
+                // Mostrar la sección de referencias si hay alguna
+                if (hasCartas || hasMazos) {
+                    document.getElementById('referencesSection').style.display = 'block';
+                }
+                
+            } catch (error) {
+                console.error('Error loading references:', error);
+                // No mostrar error, simplemente sin referencias
+            }
+        }
+        
+        async function importarMazo(mazoId, mazoNombre, btn) {
+            try {
+                // Verificar sesión
+                const sessionResponse = await fetch('/The-Conjurer/check_session.php', { credentials: 'same-origin' });
+                const session = await sessionResponse.json();
+                
+                if (!session.logged_in) {
+                    alert('Debe iniciar sesión para importar mazos');
+                    window.location.href = 'auth.html';
+                    return;
+                }
+                
+                // Obtener datos del mazo desde la BD
+                const response = await fetch(`/The-Conjurer/get_mazo_para_importar.php?mazo_id=${mazoId}`, { 
+                    credentials: 'same-origin' 
+                });
+                
+                if (!response.ok) throw new Error('Error al obtener datos del mazo');
+                
+                const mazoData = await response.json();
+                
+                if (mazoData.error) {
+                    alert('Error: ' + mazoData.error);
+                    return;
+                }
+                
+                // Guardar mazo en el perfil del usuario
+                const saveResponse = await fetch('/The-Conjurer/save_imported_mazo.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        nombre: mazoNombre + ' (Importado)',
+                        mitologia: mazoData.mitologia,
+                        mazo_data: mazoData.mazo_data
+                    })
+                });
+                
+                const result = await saveResponse.json();
+                
+                if (result.error) {
+                    alert('Error al guardar: ' + result.error);
+                } else {
+                    btn.textContent = 'Mazo Guardado!';
+                    btn.disabled = true;
+                    btn.style.background = '#95a5a6';
+                    setTimeout(() => {
+                        alert('Mazo guardado exitosamente! Puedes verlo en tu perfil.');
+                        btn.textContent = 'Guardar Mazo en Mi Perfil';
+                        btn.disabled = false;
+                        btn.style.background = '#27ae60';
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al importar mazo: ' + error.message);
+            }
+        }
 
         async function loadNewsDetail(newsId) {
             try {
@@ -113,6 +303,67 @@
                 document.getElementById('detail-date').textContent = 'Publicado: ' + formatDate(noticia.fecha);
                 document.getElementById('detail-title').textContent = noticia.titulo;
                 document.getElementById('detail-content').innerHTML = noticia.contenido;
+                // Cargar archivos e imágenes subidos asociados a esta noticia (mostrar imágenes arriba y adjuntos abajo)
+                try {
+                    const archivosResp = await fetch(`/The-Conjurer/get_noticias_archivos.php?noticia_id=${newsId}`);
+                    if (archivosResp.ok) {
+                        const archivos = await archivosResp.json();
+                        // Normalizar ruta helper
+                        const normalize = (p) => {
+                            if (!p) return p;
+                            if (p.startsWith('http')) return p;
+                            if (p.startsWith('/')) return p;
+                            return '/The-Conjurer/' + p;
+                        };
+
+                        // Imágenes: insertar antes del contenido
+                        const container = document.getElementById('detail-content');
+                        const imgWrapper = document.createElement('div');
+                        imgWrapper.style.textAlign = 'center';
+                        imgWrapper.style.marginBottom = '14px';
+                        let anyImage = false;
+                        archivos.filter(a => a.tipo === 'imagen').forEach(img => {
+                            const src = normalize(img.archivo_path);
+                            const el = document.createElement('img');
+                            el.src = src;
+                            el.alt = img.nombre_original || 'Imagen';
+                            el.style.maxWidth = '80%';
+                            el.style.height = 'auto';
+                            el.style.display = 'block';
+                            el.style.margin = '0 auto 12px';
+                            imgWrapper.appendChild(el);
+                            anyImage = true;
+                        });
+                        if (anyImage) container.prepend(imgWrapper);
+
+                        // Adjuntos: crear lista y añadir al final
+                        const files = archivos.filter(a => a.tipo === 'adjunto');
+                        if (files.length > 0) {
+                            const filesDiv = document.createElement('div');
+                            filesDiv.style.marginTop = '18px';
+                            filesDiv.innerHTML = '<h3 style="font-size:1rem; color:#3b0066;">Archivos adjuntos</h3>';
+                            const ul = document.createElement('ul');
+                            ul.style.listStyle = 'none';
+                            ul.style.padding = '0';
+                            files.forEach(f => {
+                                const li = document.createElement('li');
+                                li.style.margin = '8px 0';
+                                const a = document.createElement('a');
+                                a.href = normalize(f.archivo_path);
+                                a.textContent = f.nombre_original || f.archivo_path;
+                                a.style.color = '#27ae60';
+                                a.style.fontWeight = '700';
+                                a.setAttribute('download', '');
+                                li.appendChild(a);
+                                ul.appendChild(li);
+                            });
+                            filesDiv.appendChild(ul);
+                            container.appendChild(filesDiv);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error cargando archivos de noticia:', err);
+                }
                 
                 // Actualizar título de la página
                 document.title = noticia.titulo + ' - The Conjurer: Guerra de Mitos';

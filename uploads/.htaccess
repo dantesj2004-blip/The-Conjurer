@@ -1,0 +1,17 @@
+# Directorio de Uploads
+# Los archivos aquí se pueden descargar pero no ejecutar
+
+<FilesMatch "\.(php|php3|php4|php5|phtml|pht|phps|phar|phpt|pgif|shtml|pjpeg|pjpg)$">
+    Deny from all
+</FilesMatch>
+
+# Permitir descargas directas
+<FilesMatch "\.(jpg|jpeg|png|gif|pdf|zip|rar|webp)$">
+    Allow from all
+</FilesMatch>
+
+# Desactivar ejecución de scripts
+php_flag engine off
+
+# Permitir lista de directorios
+Options Indexes
