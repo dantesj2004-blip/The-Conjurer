@@ -1,53 +1,105 @@
 <?php
-header('Content-Type: application/json; charset=utf-8');
 session_start();
+header('Content-Type: application/json; charset=utf-8');
 
-// Verificar admin
+require_once __DIR__ . '/config.php';
+
 if (!isset($_SESSION['es_admin']) || !$_SESSION['es_admin']) {
     http_response_code(403);
-    echo json_encode(['error' => 'No autorizado']);
+    echo json_encode([
+        'success' => false,
+        'error' => 'No autorizado'
+    ]);
     exit;
 }
 
-$data = json_decode(file_get_contents('php://input'), true);
-$usuario_id = $data['usuario_id'] ?? null;
-$nueva_password = $data['nueva_password'] ?? null;
+$raw = file_get_contents('php://input');
+$data = json_decode($raw, true);
 
-if (!$usuario_id || !$nueva_password || strlen($nueva_password) < 6) {
+if (!is_array($data)) {
+    $data = $_POST;
+}
+
+$usuario_id = 0;
+
+if (isset($data['usuario_id'])) {
+    $usuario_id = (int)$data['usuario_id'];
+} elseif (isset($data['id'])) {
+    $usuario_id = (int)$data['id'];
+} elseif (isset($data['user_id'])) {
+    $usuario_id = (int)$data['user_id'];
+}
+
+$nueva_password = '';
+
+if (isset($data['nueva_password'])) {
+    $nueva_password = trim($data['nueva_password']);
+} elseif (isset($data['password'])) {
+    $nueva_password = trim($data['password']);
+} elseif (isset($data['new_password'])) {
+    $nueva_password = trim($data['new_password']);
+}
+
+if ($usuario_id <= 0) {
     http_response_code(400);
-    echo json_encode(['error' => 'Datos incompletos o contraseña muy corta']);
+    echo json_encode([
+        'success' => false,
+        'error' => 'ID de usuario no válido'
+    ]);
     exit;
 }
 
-$conn = new mysqli('localhost', 'root', '', 'the conjurer');
-if ($conn->connect_error) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión']);
+if ($nueva_password === '') {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'error' => 'La nueva contraseña está vacía'
+    ]);
     exit;
 }
 
-$conn->set_charset('utf8');
-
-// Hash de la nueva contraseña
 $hashed_password = password_hash($nueva_password, PASSWORD_DEFAULT);
 
-// Actualizar contraseña
-$sql = "UPDATE usuarios SET contraseña = ? WHERE id = ?";
-$stmt = $conn->prepare($sql);
+$stmt = $conexion->prepare("UPDATE usuarios SET `contraseña` = ? WHERE id = ?");
+
 if (!$stmt) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error en prepare: ' . $conn->error]);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Error SQL prepare: ' . $conexion->error
+    ]);
     exit;
 }
 
 $stmt->bind_param('si', $hashed_password, $usuario_id);
-if ($stmt->execute()) {
-    echo json_encode(['success' => true, 'message' => 'Contraseña actualizada correctamente']);
-} else {
+
+if (!$stmt->execute()) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error al actualizar contraseña: ' . $stmt->error]);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Error al actualizar contraseña: ' . $stmt->error
+    ]);
+    $stmt->close();
+    $conexion->close();
+    exit;
 }
 
+if ($stmt->affected_rows < 1) {
+    http_response_code(404);
+    echo json_encode([
+        'success' => false,
+        'error' => 'No se actualizó ningún usuario. Revisa que el ID exista.'
+    ]);
+    $stmt->close();
+    $conexion->close();
+    exit;
+}
+
+echo json_encode([
+    'success' => true,
+    'message' => 'Contraseña actualizada correctamente'
+]);
+
 $stmt->close();
-$conn->close();
+$conexion->close();
 ?>
